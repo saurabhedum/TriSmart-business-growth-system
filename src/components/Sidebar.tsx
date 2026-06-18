@@ -46,6 +46,7 @@ import { useData } from "../contexts/DataContext";
 export const layers = [
   { id: "home", label: "Home", icon: Home, description: "Welcome Dashboard" },
   { id: "dashboard", label: "Analytics", icon: BarChart3, description: "Business Performance" },
+  { id: "erp", label: "ERP Dashboard", icon: BookOpen, description: "Janta Gallery ERP" },
   { id: "retention", label: "Repeat Customers", icon: Repeat, description: "Bring back customers" },
   { id: "expenses", label: "Expenses", icon: Wallet, description: "Track Cashflow" },
   { id: "leads", label: "Customers", icon: Users, description: "Your customer list" },
@@ -65,7 +66,7 @@ export const layers = [
   { id: "themes", label: "Appearance", icon: Palette, description: "Change colors & look" }
 ];
 
-const mainGroupIds = ["dashboard", "leads", "interactions", "automation", "campaigns"];
+const mainGroupIds = ["dashboard", "erp", "leads", "interactions", "automation", "campaigns"];
 const salesGrowthGroupIds = ["expenses", "pos", "retention", "templates"];
 const workspaceGroupIds = ["home", "data_import", "inventory", "engine"];
 const billingSupportGroupIds = ["invoices", "quotations", "payments", "tickets"];

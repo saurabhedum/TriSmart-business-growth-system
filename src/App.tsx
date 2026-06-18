@@ -25,6 +25,7 @@ import { TicketsView } from "./views/TicketsView";
 import { PosView } from "./views/PosView";
 import { ExpensesView } from "./views/ExpensesView";
 import { TemplatesView } from "./views/TemplatesView";
+import { ErpView } from "./views/ErpView";
 import { AnimatePresence, motion } from "motion/react";
 import { Menu, X, AlertTriangle } from "lucide-react";
 import { auth, loginWithGoogle, logout } from './firebase';
@@ -236,6 +237,7 @@ export default function App() {
       case "settings": return <SettingsView key="settings" />;
       case "themes": return <ThemeSettingsView key="themes" />;
       case "pos": return <PosView key="pos" />;
+      case "erp": return <ErpView key="erp" />;
       case "expenses": return <ExpensesView key="expenses" />;
       default: 
         return (
