@@ -1,0 +1,147 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Lead",
+      "description": "A business lead captured via Instagram or WhatsApp",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "mobileNumber": { "type": "string" },
+        "email": { "type": "string" },
+        "source": { "type": "string", "enum": ["Instagram", "WhatsApp", "Manual", "Web"], "description": "Where the lead came from" },
+        "status": { "type": "string", "enum": ["New", "FollowedUp", "Qualified", "Converted", "Lost"] },
+        "interestLevel": { "type": "string", "enum": ["Low", "Medium", "High"] },
+        "lastInteraction": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "name", "source", "status", "ownerId"]
+    },
+    "SocialAccount": {
+      "title": "SocialAccount",
+      "description": "Connected Instagram or social media account",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "platform": { "type": "string", "enum": ["Instagram", "Facebook", "LinkedIn"] },
+        "username": { "type": "string" },
+        "accessToken": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Disconnected", "Expired"] },
+        "ownerId": { "type": "string" },
+        "profileImageUrl": { "type": "string" },
+        "connectedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "platform", "username", "status", "ownerId"]
+    },
+    "MarketingCampaign": {
+      "title": "MarketingCampaign",
+      "description": "An automated marketing campaign",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "channel": { "type": "string", "enum": ["WhatsApp", "Instagram", "Bulk"] },
+        "messageTemplate": { "type": "string" },
+        "status": { "type": "string", "enum": ["Draft", "Scheduled", "Active", "Completed"] },
+        "sentCount": { "type": "number" },
+        "scheduledAt": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["id", "title", "channel", "status", "ownerId"]
+    },
+    "Interaction": {
+      "title": "Interaction",
+      "description": "An interaction with a lead (message, notification, etc.)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "leadId": { "type": "string" },
+        "leadName": { "type": "string" },
+        "type": { "type": "string", "enum": ["WhatsApp", "InstagramDM", "ManualNote", "Automation"] },
+        "content": { "type": "string" },
+        "direction": { "type": "string", "enum": ["Inbound", "Outbound"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["id", "leadId", "type", "content", "timestamp", "ownerId"]
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "description": "Business Automation Settings",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string" },
+        "businessLogo": { "type": "string" },
+        "whatsappApiKey": { "type": "string" },
+        "whatsappPhoneId": { "type": "string" },
+        "instagramAppId": { "type": "string" },
+        "instagramAppSecret": { "type": "string" },
+        "automationEnabled": { "type": "boolean" },
+        "chatbotActive": { "type": "boolean" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["ownerId"]
+    },
+    "AutomationAuditLog": {
+      "title": "AutomationAuditLog",
+      "description": "Log of automated marketing actions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "type": { "type": "string", "enum": ["campaign_sent", "lead_captured", "auto_reply", "alert"] },
+        "description": { "type": "string" },
+        "affectedCount": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Success", "Partial", "Failed"] }
+      },
+      "required": ["id", "ownerId", "type", "timestamp"]
+    },
+    "Conversion": {
+      "title": "Conversion",
+      "description": "A successful conversion from a lead",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "leadId": { "type": "string" },
+        "amount": { "type": "number" },
+        "referenceId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["id", "leadId", "amount", "date", "ownerId"]
+    }
+  },
+  "firestore": {
+    "/leads/{leadId}": {
+      "schema": { "$ref": "#/entities/Lead" },
+      "description": "Business leads"
+    },
+    "/social_accounts/{accountId}": {
+      "schema": { "$ref": "#/entities/SocialAccount" },
+      "description": "Connected social media accounts"
+    },
+    "/marketing_campaigns/{campaignId}": {
+      "schema": { "$ref": "#/entities/MarketingCampaign" },
+      "description": "Marketing campaigns"
+    },
+    "/interactions/{interactionId}": {
+      "schema": { "$ref": "#/entities/Interaction" },
+      "description": "Lead interactions"
+    },
+    "/conversions/{conversionId}": {
+      "schema": { "$ref": "#/entities/Conversion" },
+      "description": "Successful conversions from leads"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/AppSettings" },
+      "description": "App settings"
+    },
+    "/automation_audit/{auditId}": {
+      "schema": { "$ref": "#/entities/AutomationAuditLog" },
+      "description": "Automation logs"
+    }
+  }
+}

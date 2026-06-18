@@ -1,0 +1,35 @@
+# Retail OS Project Anatomy
+
+This document provides a comprehensive overview of the Retail OS architecture and modular design.
+
+## STAGE 1: Enterprise Overview
+This platform is a comprehensive **AI-Powered Retail Operating System** designed for omni-channel retailers, showrooms, and wholesalers. Its core mission is to maximize revenue, retention, and operational efficiency through automated sales acquisition and intelligent customer lifecycle management.
+
+## STAGE 2: Technical Architecture
+*   **Runtime**: Full-stack TypeScript application.
+*   **Frontend**: Vite-powered React 18+ SPA (Single Page Application).
+*   **Backend**: Node.js/Express server (via `server.ts`) for secure API proxying and backend logic.
+*   **Database/Auth**: Firebase Firestore (NoSQL) for all persistent data and Firebase Authentication for secure access.
+*   **Deployment**: Optimized build pipeline targeting containerized production environments.
+
+## STAGE 3: Module & Feature Map
+This system is structured into high-impact functional modules:
+
+### 3.1 AI Agents & Intelligence
+*   **Sales Agent**: Leads conversion and opportunity identification.
+*   **Retention/Service Agent**: Automated lifecycle management, warranty, and recurring service reminders.
+*   **Analytics Agent**: Growth opportunity detection (Dashboard insights).
+
+### 3.2 Lead & Customer Management (CRM Engine)
+*   **Lead Acquisition**: Captures from WhatsApp, Instagram, Website, QR, and physical walk-ins (CRM/Lead Hub).
+*   **Customer Memory System**: Maintains deep context (purchases, interests, preferences).
+*   **Family Relationship Graph**: Household-level tracking for personalized cross-selling.
+
+### 3.3 Operations & Sales
+*   **Quick POS View**: Optimized for rapid, walk-in transaction processing.
+*   **Inventory Intelligence**: Monitoring fast/slow-moving inventory and automated stock/profit analysis.
+*   **Sales Conversion/Automation**: Intelligent follow-up sequences and abandoned inquiry recovery.
+
+### 3.4 Integration Hub
+*   **WhatsApp/Instagram APIs**: Direct messaging and chatbot integration for acquisition/conversion.
+*   **Third-party/Webhook Support**: Orchestrating omni-channel data flows into the central interaction hub.
