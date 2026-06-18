@@ -827,14 +827,43 @@ const erpHtml = `<!DOCTYPE html>
 `;
 
 export const ErpView = () => {
+  const [htmlContent, setHtmlContent] = React.useState(erpHtml);
+
+  React.useEffect(() => {
+    // Inject the theme css variables into the iframe
+    const style = getComputedStyle(document.documentElement);
+    const bg = style.getPropertyValue('--bg-color').trim();
+    const fg = style.getPropertyValue('--text-color').trim();
+    const accent = style.getPropertyValue('--accent').trim();
+    const muted = style.getPropertyValue('--text-muted').trim();
+    const border = style.getPropertyValue('--border-color').trim() || '#E7E2D8';
+
+    const injectedHtml = erpHtml.replace(
+      ':root{',
+      `{":root{"}
+        --bg: ${bg || '#FAF7F2'};
+        --card: ${bg || '#FFFFFF'};
+        --text-dark: ${fg || '#1B2230'};
+        --text-muted: ${muted || '#6B7280'};
+        --border: ${border};
+        --navy: ${accent || '#16243F'};
+        --navy-light: ${accent || '#1F3358'};
+        --gold: ${accent || '#C8932B'};
+        --gold-light: ${accent || '#E8B655'};`.replace('{"', '').replace('"}', '')
+    );
+    
+    setHtmlContent(injectedHtml);
+  }, []);
+
   return (
-    <div className="w-full h-full bg-white dark:bg-zinc-900 overflow-hidden flex flex-col relative rounded-tl-2xl border-l border-t border-neutral-200 dark:border-white/10 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
+    <div className="w-full h-full bg-[var(--bg-color)] overflow-hidden flex flex-col relative rounded-tl-2xl border-l border-t border-[var(--border-color)] dark:border-white/10 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
       <div className="flex-1 w-full h-full p-0">
         <iframe
-          srcDoc={erpHtml}
-          className="w-full h-full border-none outline-none bg-white"
+          srcDoc={htmlContent}
+          className="w-full h-full border-none outline-none"
           title="ERP Preview"
           sandbox="allow-scripts allow-same-origin"
+          style={{ background: 'var(--bg-color)' }}
         />
       </div>
     </div>
