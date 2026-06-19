@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, AuthError, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { initializeFirestore, memoryLocalCache, enableMultiTabIndexedDbPersistence } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, AuthError } from 'firebase/auth';
+import { initializeFirestore, memoryLocalCache, doc, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../firebase-applet-config.json';
 
@@ -8,15 +8,10 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 const dbId = (firebaseConfig.firestoreDatabaseId === '(default)' || firebaseConfig.firestoreDatabaseId === 'default') ? undefined : firebaseConfig.firestoreDatabaseId;
 export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
   localCache: memoryLocalCache()
 }, dbId);
 export const storage = getStorage(app);
-
-// Enable offline persistence
-if (typeof window !== 'undefined') {
-  // Offline persistence can cause INTERNAL ASSERTION FAILED in iframe preview
-  // enableMultiTabIndexedDbPersistence(db).catch((err) => { ... });
-}
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -36,7 +31,6 @@ export const loginWithGoogle = async () => {
     if (authError.code === 'auth/popup-blocked') {
       throw new Error("Sign-in popup was blocked by your browser. Please allow popups for this site to sign in, or try opening the app in a new tab.");
     } else if (authError.code === 'auth/cancelled-popup-request') {
-      // User closed the popup before finishing, or multiple popups were requested
       console.warn("Sign-in popup was closed or cancelled.");
     } else if (authError.code === 'auth/network-request-failed') {
       throw new Error("Network request failed. This is common in iframes due to ad-blockers or privacy settings. Please try opening the app in a new tab.");

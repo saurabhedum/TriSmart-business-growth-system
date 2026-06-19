@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, Settings, Database, Send, Loader2, Key } from 'lucide-react';
+import { useData } from '../contexts/DataContext';
 
 interface Message {
   id: string;
@@ -9,6 +10,7 @@ interface Message {
 }
 
 export function DraggableOrb({ onSettingsClick, onAdminClick }: { onSettingsClick?: () => void, onAdminClick?: () => void }) {
+  const { settings } = useData();
   const constraintsRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   
@@ -17,8 +19,9 @@ export function DraggableOrb({ onSettingsClick, onAdminClick }: { onSettingsClic
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState(localStorage.getItem('GROQ_API_KEY') || '');
-  const [showConfig, setShowConfig] = useState(!localStorage.getItem('GROQ_API_KEY'));
+  // Get API key from settings or local storage
+  const [apiKey, setApiKey] = useState(settings?.groqApiKey || localStorage.getItem('GROQ_API_KEY') || '');
+  const [showConfig, setShowConfig] = useState(!apiKey);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -27,6 +30,13 @@ export function DraggableOrb({ onSettingsClick, onAdminClick }: { onSettingsClic
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isOpen]);
+
+  useEffect(() => {
+    if (settings?.groqApiKey) {
+      setApiKey(settings.groqApiKey);
+      setShowConfig(false);
+    }
+  }, [settings?.groqApiKey]);
 
   const saveApiKey = () => {
     localStorage.setItem('GROQ_API_KEY', apiKey);
@@ -37,6 +47,18 @@ export function DraggableOrb({ onSettingsClick, onAdminClick }: { onSettingsClic
     if (e) e.preventDefault();
     if (!input.trim() || !apiKey) return;
     
+    // Check if AI features are globally enabled
+    if (!settings?.enableAiFeatures) {
+      const errorMsg: Message = { 
+        id: Date.now().toString(), 
+        role: 'assistant', 
+        content: 'AI capabilities are currently disabled globally. Please enable "Global AI Capabilities" in Settings > Security to use this feature.' 
+      };
+      setMessages(prev => [...prev, { id: Date.now().toString() + '_user', role: 'user', content: input.trim() }, errorMsg]);
+      setInput('');
+      return;
+    }
+
     const newMsg: Message = { id: Date.now().toString(), role: 'user', content: input.trim() };
     setMessages(prev => [...prev, newMsg]);
     setInput('');

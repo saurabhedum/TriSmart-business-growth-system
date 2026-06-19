@@ -37,6 +37,7 @@ import {
   Database,
   Languages,
   Key,
+  Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -1270,6 +1271,12 @@ export function SettingsView() {
                     "Enable Billing & Support Module",
                     "Activate invoices, quotations, payments, and ticket modules. Keep disabled to maintain core focus.",
                     Lock,
+                  )}
+                  {renderToggle(
+                    "enableAiFeatures",
+                    "Enable Global AI Capabilities",
+                    "Allow AI capabilities like copilot, sentiment analysis, and suggestions across the entire platform. Bills may apply.",
+                    Sparkles,
                   )}
                   {renderToggle(
                     "aiChatbotEnabled",

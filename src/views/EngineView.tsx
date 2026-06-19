@@ -111,6 +111,12 @@ Tone: ${tone}.
 Language: ${language}.
 `;
 
+    if (!settings.enableAiFeatures) {
+       toast.error("Global AI Capabilities are disabled. Please enable them in Settings > Security.");
+       setIsGenerating(false);
+       return;
+    }
+
     try {
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",

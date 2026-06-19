@@ -244,11 +244,11 @@ export function AutomationsView() {
         unknownQueryMessage: "",
         businessHoursOnly: false,
         commands: [],
-        aiSalesCopilotEnabled: true,
+        aiSalesCopilotEnabled: false,
         salesTone: 'Consultative',
-        abandonedInquiryRecovery: true,
+        abandonedInquiryRecovery: false,
         abandonedInquiryDelayMinutes: 60,
-        followUpSequenceEnabled: true,
+        followUpSequenceEnabled: false,
       };
       setSettings(initialSettings);
 

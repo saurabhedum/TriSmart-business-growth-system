@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trismart ERP — Workflow Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0d14;
+    --bg2: #0e1220;
+    --glass: rgba(255,255,255,0.04);
+    --glass-hover: rgba(255,255,255,0.07);
+    --glass-open: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.16);
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+    --accent-cyan: #06b6d4;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --accent-indigo: #6366f1;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #475569;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background orbs */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::before {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    top: -200px; left: -200px;
+  }
+  body::after {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(139,92,246,0.10) 0%, transparent 70%);
+    bottom: -150px; right: -150px;
+  }
+
+  .page-wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ── Header ── */
+  header {
+    padding: 64px 0 48px;
+    text-align: center;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 100px; padding: 6px 16px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
+    color: #93c5fd; text-transform: uppercase; margin-bottom: 24px;
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  h1 span { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .subtitle { font-size: 16px; color: var(--text-secondary); max-width: 520px; margin: 0 auto 40px; }
+  .stats-row {
+    display: flex; justify-content: center; gap: 32px; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .stat { text-align: center; }
+  .stat-num { font-family: var(--font-display); font-size: 28px; font-weight: 700; }
+  .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+  /* ── Part headers ── */
+  .part-header {
+    display: flex; align-items: center; gap: 16px;
+    margin: 56px 0 28px;
+  }
+  .part-pill {
+    font-family: var(--font-display); font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 5px 14px; border-radius: 100px;
+  }
+  .part-pill.standard { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+  .part-pill.research { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.25); }
+  .part-title { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+  .part-count { font-size: 13px; color: var(--text-muted); margin-left: auto; }
+
+  /* ── Category group ── */
+  .cat-group { margin-bottom: 8px; }
+  .cat-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+    margin-bottom: 0;
+  }
+  .cat-header:hover { background: var(--glass-hover); }
+  .cat-icon { font-size: 18px; }
+  .cat-name {
+    font-family: var(--font-display); font-size: 15px; font-weight: 600;
+    flex: 1;
+  }
+  .cat-sub { font-size: 12px; color: var(--text-muted); }
+  .cat-tag {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 3px 10px; border-radius: 100px;
+  }
+
+  /* ── Workflow cards (inside a category) ── */
+  .workflows-list {
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    display: none;
+  }
+  .cat-group.open .workflows-list { display: block; }
+  .cat-group.open .cat-header { border-radius: 12px 12px 0 0; }
+
+  .wf-card {
+    border-bottom: 1px solid var(--border);
+    background: var(--glass);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .wf-card:last-child { border-bottom: none; }
+  .wf-card:hover > .wf-header { background: var(--glass-hover); }
+
+  .wf-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 22px;
+    transition: background 0.2s;
+  }
+  .wf-id {
+    font-family: var(--font-display); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.06em; min-width: 36px;
+    color: var(--text-muted);
+  }
+  .wf-title { font-size: 14px; font-weight: 500; flex: 1; }
+  .wf-chevron {
+    font-size: 12px; color: var(--text-muted);
+    transition: transform 0.25s ease;
+  }
+  .wf-card.open .wf-chevron { transform: rotate(180deg); }
+
+  /* ── Expanded panel ── */
+  .wf-body {
+    display: none;
+    padding: 0 22px 24px 72px;
+  }
+  .wf-card.open .wf-body { display: block; }
+
+  .glass-panel {
+    background: var(--glass-open);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    margin-top: 8px;
+  }
+
+  .panel-section { margin-bottom: 20px; }
+  .panel-section:last-child { margin-bottom: 0; }
+  .panel-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .panel-label .icon { font-size: 14px; }
+  .panel-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+  .highlight { color: var(--text-primary); font-weight: 500; }
+
+  /* Logic flow */
+  .logic-flow {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-top: 10px;
+  }
+  .flow-step {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 14px;
+    font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .flow-arrow { font-size: 12px; color: var(--text-muted); }
+
+  /* Elements chips */
+  .elements-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .element-chip {
+    font-size: 12px; font-weight: 500;
+    padding: 5px 12px; border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  /* Gap badge (research only) */
+  .gap-box {
+    background: rgba(246,173,85,0.07); border: 1px solid rgba(246,173,85,0.2);
+    border-radius: 10px; padding: 12px 16px; margin-top: 10px;
+  }
+  .gap-box .gap-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #f59e0b; text-transform: uppercase; margin-bottom: 6px; }
+  .gap-box p { font-size: 13px; color: #fcd34d; }
+
+  /* Divider */
+  hr.section-div { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  /* Search bar */
+  .search-wrap { position: relative; max-width: 500px; margin: 0 auto 40px; }
+  .search-wrap input {
+    width: 100%; padding: 14px 20px 14px 48px;
+    background: var(--glass); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text-primary);
+    font-family: var(--font-body); font-size: 14px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .search-wrap input::placeholder { color: var(--text-muted); }
+  .search-wrap input:focus { border-color: var(--border-hover); }
+  .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--text-muted); pointer-events: none; }
+
+  /* Expand/collapse all */
+  .controls { display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 16px; }
+  .ctrl-btn {
+    font-size: 12px; font-weight: 500; padding: 7px 16px;
+    background: var(--glass); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text-secondary);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .ctrl-btn:hover { background: var(--glass-hover); color: var(--text-primary); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+  /* Hidden for search */
+  .wf-card.hidden { display: none; }
+  .cat-group.all-hidden { display: none; }
+
+  @media (max-width: 640px) {
+    .wf-body { padding: 0 14px 20px 14px; }
+    .wf-header { padding: 14px 16px; }
+    .stats-row { gap: 20px; }
+    .part-count { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- Header -->
+  <header>
+    <div class="badge"><span class="dot"></span> Trismart Automations &nbsp;·&nbsp; June 2026</div>
+    <h1>Retail ERP<br><span>Workflow Analysis</span></h1>
+    <p class="subtitle">Electronics Retail Sector — Indian Market. A complete map of every workflow your business management system should enable.</p>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-num" style="color:#34d399">55</div><div class="stat-label">Total Workflows</div></div>
+      <div class="stat"><div class="stat-num" style="color:#60a5fa">34</div><div class="stat-label">Standard ERP</div></div>
+      <div class="stat"><div class="stat-num" style="color:#a78bfa">21</div><div class="stat-label">Research-Based</div></div>
+      <div class="stat"><div class="stat-num" style="color:#f59e0b">16</div><div class="stat-label">Categories</div></div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search workflows…" oninput="filterWorkflows(this.value)">
+    </div>
+  </header>
+
+  <div class="controls">
+    <button class="ctrl-btn" onclick="expandAll()">Expand All</button>
+    <button class="ctrl-btn" onclick="collapseAll()">Collapse All</button>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PART 1 — STANDARD ERP WORKFLOWS
+  ══════════════════════════════════ -->
+  <div class="part-header">
+    <span class="part-pill standard">Part 1</span>
+    <span class="part-title">Standard ERP Workflows</span>
+    <span class="part-count">34 workflows · 9 categories</span>
+  </div>
+
+  <!-- A. Sales & Billing -->
+  <div class="cat-group" id="cat-a">
+    <div class="cat-header" onclick="toggleCat('cat-a')">
+      <span class="cat-icon">🧾</span>
+      <span class="cat-name">Sales &amp; Billing</span>
+      <span class="cat-sub">The front counter — where every rupee starts</span>
+      <span class="cat-tag" style="background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25)">5 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+
+      <div class="wf-card" id="wf-A1">
+        <div class="wf-header" onclick="toggleWf('wf-A1')">
+          <span class="wf-id" style="color:#60a5fa">A1</span>
+          <span class="wf-title">Walk-In Customer Billing</span>
+          <span class="wf-chevron">▼</span>
+        </div>
+        <div class="wf-body">
+          <div class="glass-panel">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">📋</span> About</div>
+              <p class="panel-text">The core transaction workflow. A salesman selects items, enters the customer name, and the system prints a <span class="highlight">GST-compliant receipt instantly</span>. No handwritten bill, no calculator needed. Billing takes 30 seconds instead of 3 minutes — customers get a clean printed receipt and errors are eliminated.</p>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div>
+              <div class="logic-flow">
+                <span class="flow-step">Salesman opens POS</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Scans / selects items</span><span class="flow-arrow">→</span>
+                <span class="flow-step">System applies GST rate</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Customer name entered</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Bill saved &amp; printed</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Stock decrements</span>
+              </div>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">🧩</span> Key Elements</div>
+              <div class="elements-grid">
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">POS Interface</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Item Search / Barcode</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">GST Auto-Calc</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Customer Lookup</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Receipt Printer</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Stock Ledger Update</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-card" id="wf-A2">
+        <div class="wf-header" onclick="toggleWf('wf-A2')">
+          <span class="wf-id" style="color:#60a5fa">A2</span>
+          <span class="wf-title">Credit &amp; EMI Sale Recording</span>
+          <span class="wf-chevron">▼</span>
+        </div>
+        <div class="wf-body">
+          <div class="glass-panel">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">📋</span> About</div>
+              <p class="panel-text">When a customer buys on credit or EMI, the system records the amount paid and the outstanding balance — automatically linked to that customer's profile. Every outstanding amount is visible in one place, making recovery systematic.</p>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div>
+              <div class="logic-flow">
+                <span class="flow-step">Sale created</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Payment mode = Credit/EMI</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Down payment entered</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Balance posted to customer ledger</span><span class="flow-arrow">→</span>
+                <span class="flow-step">EMI schedule generated</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Reminder dates set</span>
+              </div>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">🧩</span> Key Elements</div>
+              <div class="elements-grid">
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Customer Ledger</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">EMI Schedule</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Payment Mode Selector</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Outstanding Balance View</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Auto-Reminder Trigger</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-card" id="wf-A3">
+        <div class="wf-header" onclick="toggleWf('wf-A3')">
+          <span class="wf-id" style="color:#60a5fa">A3</span>
+          <span class="wf-title">Quotation to Sale Conversion</span>
+          <span class="wf-chevron">▼</span>
+        </div>
+        <div class="wf-body">
+          <div class="glass-panel">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">📋</span> About</div>
+              <p class="panel-text">A salesman prepares a written quote on the floor. If the customer agrees, one click converts it into a final bill — no re-entry. Speeds up big-ticket negotiations for ACs, washing machines, and TVs.</p>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div>
+              <div class="logic-flow">
+                <span class="flow-step">Items added to quote</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Discount applied</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Quote saved &amp; shared (PDF/WA)</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Customer accepts</span><span class="flow-arrow">→</span>
+                <span class="flow-step">1-click → Final Bill</span><span class="flow-arrow">→</span>
+                <span class="flow-step">GST receipt generated</span>
+              </div>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">🧩</span> Key Elements</div>
+              <div class="elements-grid">
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Quote Builder</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">PDF Export</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Convert-to-Bill Button</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">WhatsApp Share</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Quote Expiry Timer</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-card" id="wf-A4">
+        <div class="wf-header" onclick="toggleWf('wf-A4')">
+          <span class="wf-id" style="color:#60a5fa">A4</span>
+          <span class="wf-title">Return &amp; Exchange Processing</span>
+          <span class="wf-chevron">▼</span>
+        </div>
+        <div class="wf-body">
+          <div class="glass-panel">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">📋</span> About</div>
+              <p class="panel-text">When a customer returns or exchanges a product, the system records the return, adjusts stock, and issues a credit note or replacement bill. Returns handled cleanly — no cash confusion and stock count stays accurate even on return days.</p>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div>
+              <div class="logic-flow">
+                <span class="flow-step">Original bill looked up</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Return reason recorded</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Item back in stock</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Credit note / replacement bill issued</span><span class="flow-arrow">→</span>
+                <span class="flow-step">GST reversal applied</span>
+              </div>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">🧩</span> Key Elements</div>
+              <div class="elements-grid">
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Bill Reference Lookup</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Return Reason Codes</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Credit Note Generator</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Stock Reversal</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">GST Adjustment</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-card" id="wf-A5">
+        <div class="wf-header" onclick="toggleWf('wf-A5')">
+          <span class="wf-id" style="color:#60a5fa">A5</span>
+          <span class="wf-title">Discount &amp; Scheme Management</span>
+          <span class="wf-chevron">▼</span>
+        </div>
+        <div class="wf-body">
+          <div class="glass-panel">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">📋</span> About</div>
+              <p class="panel-text">Festival offers, bulk discounts, brand-specific schemes — set up once in the system. The right discount applies automatically at billing time. No salesman needs to remember every scheme, eliminating both over- and under-discounting.</p>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div>
+              <div class="logic-flow">
+                <span class="flow-step">Admin configures schemes</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Date range &amp; product rules set</span><span class="flow-arrow">→</span>
+                <span class="flow-step">At billing, system checks eligibility</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Best applicable discount auto-applied</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Salesman sees discount on screen</span>
+              </div>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">🧩</span> Key Elements</div>
+              <div class="elements-grid">
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Scheme Rule Engine</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Date-Based Activation</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Brand/Category Filters</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Auto-Apply Logic</span>
+                <span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Scheme Audit Log</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- B. Inventory -->
+  <div class="cat-group" id="cat-b">
+    <div class="cat-header" onclick="toggleCat('cat-b')">
+      <span class="cat-icon">📦</span>
+      <span class="cat-name">Inventory &amp; Stock Control</span>
+      <span class="cat-sub">Knowing exactly what you have and what to order</span>
+      <span class="cat-tag" style="background:rgba(16,185,129,0.1);color:#34d399;border:1px solid rgba(16,185,129,0.2)">5 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+
+      <div class="wf-card" id="wf-B1">
+        <div class="wf-header" onclick="toggleWf('wf-B1')">
+          <span class="wf-id" style="color:#34d399">B1</span>
+          <span class="wf-title">Stock Inward — Purchase Receiving</span>
+          <span class="wf-chevron">▼</span>
+        </div>
+        <div class="wf-body">
+          <div class="glass-panel">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">📋</span> About</div>
+              <p class="panel-text">When goods arrive from a supplier, the system records each item, its quantity, and purchase cost. <span class="highlight">Stock levels update immediately.</span> Every product is accounted for from the moment it enters the shop.</p>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div>
+              <div class="logic-flow">
+                <span class="flow-step">PO matched to delivery</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Items scanned / entered</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Quantity &amp; cost verified</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Discrepancies flagged</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Stock ledger updated</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Supplier invoice logged</span>
+              </div>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">🧩</span> Key Elements</div>
+              <div class="elements-grid">
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">GRN Form</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">PO Match Check</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Barcode Scanner</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Stock Ledger</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Supplier Invoice Store</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-card" id="wf-B2">
+        <div class="wf-header" onclick="toggleWf('wf-B2')">
+          <span class="wf-id" style="color:#34d399">B2</span>
+          <span class="wf-title">Real-Time Stock Count</span>
+          <span class="wf-chevron">▼</span>
+        </div>
+        <div class="wf-body">
+          <div class="glass-panel">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">📋</span> About</div>
+              <p class="panel-text">At any moment, any staff member can check live stock count of any product from phone, laptop, or billing counter. A customer asks "Do you have a 1.5-ton Daikin?" — answered in 5 seconds without walking to the back.</p>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div>
+              <div class="logic-flow">
+                <span class="flow-step">Every sale / return / inward updates stock</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Centralized inventory DB</span><span class="flow-arrow">→</span>
+                <span class="flow-step">API serves mobile + POS + web</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Real-time count displayed</span>
+              </div>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">🧩</span> Key Elements</div>
+              <div class="elements-grid">
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Centralized Stock DB</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Mobile App</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Search by SKU / Name</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Live Sync Engine</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-card" id="wf-B3">
+        <div class="wf-header" onclick="toggleWf('wf-B3')">
+          <span class="wf-id" style="color:#34d399">B3</span>
+          <span class="wf-title">IMEI &amp; Serial Number Tracking</span>
+          <span class="wf-chevron">▼</span>
+        </div>
+        <div class="wf-body">
+          <div class="glass-panel">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">📋</span> About</div>
+              <p class="panel-text">For electronics — phones, TVs, ACs — each unit has a unique IMEI or serial number. The system tracks which specific unit was sold to which customer. Critical for warranty claims, theft recovery, and service center work.</p>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div>
+              <div class="logic-flow">
+                <span class="flow-step">Unit received → IMEI/Serial scanned</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Linked to product SKU</span><span class="flow-arrow">→</span>
+                <span class="flow-step">At sale, unit IMEI tied to customer</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Searchable by IMEI anytime</span>
+              </div>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">🧩</span> Key Elements</div>
+              <div class="elements-grid">
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">IMEI Registry</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Unit-to-Customer Map</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Barcode / QR Scanner</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Warranty Link</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Search by Serial</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-card" id="wf-B4">
+        <div class="wf-header" onclick="toggleWf('wf-B4')">
+          <span class="wf-id" style="color:#34d399">B4</span>
+          <span class="wf-title">Low Stock &amp; Reorder Alert</span>
+          <span class="wf-chevron">▼</span>
+        </div>
+        <div class="wf-body">
+          <div class="glass-panel">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">📋</span> About</div>
+              <p class="panel-text">When any product falls below a set minimum quantity, the system sends an automatic alert so you can reorder before running out. The alert comes before the problem — not after the sale is lost.</p>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div>
+              <div class="logic-flow">
+                <span class="flow-step">Min stock threshold set per SKU</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Every stock deduction checks threshold</span><span class="flow-arrow">→</span>
+                <span class="flow-step">If below → alert triggered</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Owner / manager notified (app / WA)</span><span class="flow-arrow">→</span>
+                <span class="flow-step">PO auto-drafted</span>
+              </div>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">🧩</span> Key Elements</div>
+              <div class="elements-grid">
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Threshold Config</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Alert Engine</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Push Notification</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Auto PO Draft</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-card" id="wf-B5">
+        <div class="wf-header" onclick="toggleWf('wf-B5')">
+          <span class="wf-id" style="color:#34d399">B5</span>
+          <span class="wf-title">Dead Stock Identification</span>
+          <span class="wf-chevron">▼</span>
+        </div>
+        <div class="wf-body">
+          <div class="glass-panel">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">📋</span> About</div>
+              <p class="panel-text">The system flags products that haven't sold in 60–90 days and shows how much money is locked in that unsold stock. Dead stock is silent money loss — knowing it early gives time to run an offer, bundle it, or return to supplier.</p>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div>
+              <div class="logic-flow">
+                <span class="flow-step">System checks last sale date per SKU</span><span class="flow-arrow">→</span>
+                <span class="flow-step">If > threshold days → flagged</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Value = qty × purchase cost</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Dead stock report generated</span><span class="flow-arrow">→</span>
+                <span class="flow-step">Owner review &amp; action</span>
+              </div>
+            </div>
+            <hr class="section-div">
+            <div class="panel-section">
+              <div class="panel-label"><span class="icon">🧩</span> Key Elements</div>
+              <div class="elements-grid">
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Last Sale Date Tracker</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Configurable Threshold</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Locked Value Calc</span>
+                <span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Dead Stock Report</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- C. CRM -->
+  <div class="cat-group" id="cat-c">
+    <div class="cat-header" onclick="toggleCat('cat-c')">
+      <span class="cat-icon">👥</span>
+      <span class="cat-name">Customer Management (CRM)</span>
+      <span class="cat-sub">Knowing your customers better than they expect</span>
+      <span class="cat-tag" style="background:rgba(6,182,212,0.1);color:#67e8f9;border:1px solid rgba(6,182,212,0.2)">4 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-C1"><div class="wf-header" onclick="toggleWf('wf-C1')"><span class="wf-id" style="color:#67e8f9">C1</span><span class="wf-title">Customer Profile Creation</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Every buyer gets a digital profile — name, phone, address, purchase history, and outstanding amount. When a regular walks in, staff can pull up their history instantly, enabling personal service and upselling.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">New customer at billing</span><span class="flow-arrow">→</span><span class="flow-step">Phone number as unique ID</span><span class="flow-arrow">→</span><span class="flow-step">Profile created / matched</span><span class="flow-arrow">→</span><span class="flow-step">Purchase linked to profile</span><span class="flow-arrow">→</span><span class="flow-step">History grows with each visit</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Customer DB</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Phone-Based Lookup</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Purchase History View</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Profile Edit</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-C2"><div class="wf-header" onclick="toggleWf('wf-C2')"><span class="wf-id" style="color:#67e8f9">C2</span><span class="wf-title">Outstanding &amp; Credit Ledger</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">All credit sales tracked customer-wise. See at a glance who owes how much and since when. Many shops lose ₹2–3 lakhs a year in forgotten credit — this makes recovery systematic.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Credit sale recorded</span><span class="flow-arrow">→</span><span class="flow-step">Balance posted to ledger</span><span class="flow-arrow">→</span><span class="flow-step">Payment received → balance updated</span><span class="flow-arrow">→</span><span class="flow-step">Ageing report shows overdue</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Customer Ledger</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Ageing Report</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Payment Receipt Entry</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Outstanding Dashboard</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-C3"><div class="wf-header" onclick="toggleWf('wf-C3')"><span class="wf-id" style="color:#67e8f9">C3</span><span class="wf-title">Automated Payment Reminders</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">On the due date of a credit payment, the customer gets a polite WhatsApp reminder with exact amount. Recovery rates go up significantly — a machine reminding is less awkward than a personal call and doesn't damage relationships.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Due date set at time of credit sale</span><span class="flow-arrow">→</span><span class="flow-step">Scheduler runs daily</span><span class="flow-arrow">→</span><span class="flow-step">Matches today's due payments</span><span class="flow-arrow">→</span><span class="flow-step">WhatsApp message sent</span><span class="flow-arrow">→</span><span class="flow-step">Log updated</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Scheduler</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">WhatsApp API</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Message Templates</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Delivery Log</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-C4"><div class="wf-header" onclick="toggleWf('wf-C4')"><span class="wf-id" style="color:#67e8f9">C4</span><span class="wf-title">Purchase History &amp; Loyalty Tracking</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Every purchase a customer ever made, when they last visited, and what categories they prefer — all visible. A customer who bought an AC two years ago is ready for a new one; you know before they walk in.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">All bills linked to customer ID</span><span class="flow-arrow">→</span><span class="flow-step">Category affinity computed</span><span class="flow-arrow">→</span><span class="flow-step">Loyalty points accumulated</span><span class="flow-arrow">→</span><span class="flow-step">Segment-based campaigns</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Purchase Timeline</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Category Affinity</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Loyalty Points Engine</span><span class="element-chip" style="background:rgba(6,182,212,0.1);color:#a5f3fc;border-color:rgba(6,182,212,0.2)">Last Visit Date</span></div></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- D. Service Center -->
+  <div class="cat-group" id="cat-d">
+    <div class="cat-header" onclick="toggleCat('cat-d')">
+      <span class="cat-icon">🔧</span>
+      <span class="cat-name">Service Center Management</span>
+      <span class="cat-sub">The repair side — often the most disorganised part</span>
+      <span class="cat-tag" style="background:rgba(245,158,11,0.1);color:#fcd34d;border:1px solid rgba(245,158,11,0.2)">4 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-D1"><div class="wf-header" onclick="toggleWf('wf-D1')"><span class="wf-id" style="color:#fcd34d">D1</span><span class="wf-title">Job Card Creation</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">When a customer brings in a product for repair, the system creates a job card — customer details, product, problem description, and technician assigned. No more lost paper slips; every repair is traceable and the customer gets a reference number.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Customer + product details entered</span><span class="flow-arrow">→</span><span class="flow-step">Problem described</span><span class="flow-arrow">→</span><span class="flow-step">Technician assigned</span><span class="flow-arrow">→</span><span class="flow-step">Job card no. generated</span><span class="flow-arrow">→</span><span class="flow-step">SMS / WA sent to customer</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Job Card Form</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Technician Assignment</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Reference Number</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Customer Notification</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-D2"><div class="wf-header" onclick="toggleWf('wf-D2')"><span class="wf-id" style="color:#fcd34d">D2</span><span class="wf-title">Repair Status Tracking</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">At each repair stage — received, diagnosed, parts ordered, ready, delivered — status is updated. "Is my TV ready?" answered in 10 seconds without hunting for paper slips or calling the technician.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Technician updates status in app</span><span class="flow-arrow">→</span><span class="flow-step">Status logged with timestamp</span><span class="flow-arrow">→</span><span class="flow-step">Customer auto-notified on key stages</span><span class="flow-arrow">→</span><span class="flow-step">Staff can check via job no.</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Stage Pipeline</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Status Update API</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Auto-Notification</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Job Search by Ref</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-D3"><div class="wf-header" onclick="toggleWf('wf-D3')"><span class="wf-id" style="color:#fcd34d">D3</span><span class="wf-title">Warranty Claim Processing</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">System checks warranty status when a product comes in. If under warranty, the job is flagged — no billing to customer, claim routed to brand. Eliminates disputes with brands and accidental customer charges.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Job card created</span><span class="flow-arrow">→</span><span class="flow-step">System checks IMEI + purchase date</span><span class="flow-arrow">→</span><span class="flow-step">If in warranty → job flagged</span><span class="flow-arrow">→</span><span class="flow-step">No customer invoice</span><span class="flow-arrow">→</span><span class="flow-step">Brand claim logged</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Warranty Check Logic</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">IMEI Lookup</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Brand Claim Register</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Warranty Flag</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-D4"><div class="wf-header" onclick="toggleWf('wf-D4')"><span class="wf-id" style="color:#fcd34d">D4</span><span class="wf-title">Service Parts Inventory</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Spare parts used in repairs tracked separately. When a part is used, it deducts from service parts stock automatically. Stops pilferage and keeps repair margins accurate — service parts are typically the most mismanaged inventory in a shop.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Parts received → service stock updated</span><span class="flow-arrow">→</span><span class="flow-step">Technician logs part used on job</span><span class="flow-arrow">→</span><span class="flow-step">Stock deducted</span><span class="flow-arrow">→</span><span class="flow-step">Cost added to job cost</span><span class="flow-arrow">→</span><span class="flow-step">Low parts alert if needed</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Parts Inventory DB</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Job-Part Linkage</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Auto Deduction</span><span class="element-chip" style="background:rgba(245,158,11,0.1);color:#fde68a;border-color:rgba(245,158,11,0.2)">Cost Calculator</span></div></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- E. Purchase & Supplier -->
+  <div class="cat-group" id="cat-e">
+    <div class="cat-header" onclick="toggleCat('cat-e')">
+      <span class="cat-icon">🏭</span>
+      <span class="cat-name">Purchase &amp; Supplier Management</span>
+      <span class="cat-sub">Your relationship with brands and distributors</span>
+      <span class="cat-tag" style="background:rgba(99,102,241,0.12);color:#a5b4fc;border:1px solid rgba(99,102,241,0.25)">3 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-E1"><div class="wf-header" onclick="toggleWf('wf-E1')"><span class="wf-id" style="color:#a5b4fc">E1</span><span class="wf-title">Purchase Order Creation</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">When ordering from a supplier, the system creates a formal PO with items, quantities, and agreed prices. A PO is your protection — if a supplier sends wrong items or quantities, you have a document to dispute it.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Items &amp; supplier selected</span><span class="flow-arrow">→</span><span class="flow-step">Quantities &amp; prices entered</span><span class="flow-arrow">→</span><span class="flow-step">PO number generated</span><span class="flow-arrow">→</span><span class="flow-step">PO sent to supplier (PDF/email)</span><span class="flow-arrow">→</span><span class="flow-step">Pending GRN created</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">PO Form</span><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">Supplier Directory</span><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">Price History</span><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">PDF Export</span><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">GRN Pending Status</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-E2"><div class="wf-header" onclick="toggleWf('wf-E2')"><span class="wf-id" style="color:#a5b4fc">E2</span><span class="wf-title">Supplier Payment Tracking</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Every payment made to a supplier is recorded. The system shows how much you owe each supplier and what is already paid. Stops overpaying by accident and catches if a supplier shows an old balance that was already cleared.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Invoice received from supplier</span><span class="flow-arrow">→</span><span class="flow-step">Payment made → recorded</span><span class="flow-arrow">→</span><span class="flow-step">Running balance per supplier</span><span class="flow-arrow">→</span><span class="flow-step">Supplier ledger always current</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">Supplier Ledger</span><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">Payment Entry</span><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">Outstanding View</span><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">Payment History</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-E3"><div class="wf-header" onclick="toggleWf('wf-E3')"><span class="wf-id" style="color:#a5b4fc">E3</span><span class="wf-title">Multi-Supplier Price Comparison</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">For the same product from different suppliers, the system keeps purchase price history so you can compare who gives the better deal. Even 1–2% better margin on a ₹50,000 product is real money over time.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Each PO stores supplier + price</span><span class="flow-arrow">→</span><span class="flow-step">Same SKU → multiple supplier prices logged</span><span class="flow-arrow">→</span><span class="flow-step">Comparison report generated</span><span class="flow-arrow">→</span><span class="flow-step">Lowest-cost supplier highlighted</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">Price History Store</span><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">Multi-Supplier View</span><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">Comparison Report</span><span class="element-chip" style="background:rgba(99,102,241,0.1);color:#c7d2fe;border-color:rgba(99,102,241,0.2)">Best Price Flag</span></div></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- F. Accounts & Finance -->
+  <div class="cat-group" id="cat-f">
+    <div class="cat-header" onclick="toggleCat('cat-f')">
+      <span class="cat-icon">💰</span>
+      <span class="cat-name">Accounts &amp; Finance</span>
+      <span class="cat-sub">Knowing your real numbers — not just cash in hand</span>
+      <span class="cat-tag" style="background:rgba(244,63,94,0.1);color:#fda4af;border:1px solid rgba(244,63,94,0.2)">5 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-F1"><div class="wf-header" onclick="toggleWf('wf-F1')"><span class="wf-id" style="color:#fda4af">F1</span><span class="wf-title">Daily Cash Register Closing</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">At end of day, the system shows total cash collected, UPI received, card payments, and credit given. The cashier confirms the physical cash matches. Catches discrepancies the same day — not at month-end when it's too late.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">All day's bills tallied by mode</span><span class="flow-arrow">→</span><span class="flow-step">Expected cash calculated</span><span class="flow-arrow">→</span><span class="flow-step">Cashier enters physical count</span><span class="flow-arrow">→</span><span class="flow-step">Difference flagged</span><span class="flow-arrow">→</span><span class="flow-step">Day closed &amp; locked</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Day-End Summary</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Cash Entry Form</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Discrepancy Alert</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Day Lock</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-F2"><div class="wf-header" onclick="toggleWf('wf-F2')"><span class="wf-id" style="color:#fda4af">F2</span><span class="wf-title">Profit &amp; Loss View</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">The system calculates real profit — revenue minus purchase cost, staff cost, and other expenses — updated daily. Most shop owners find out their P&L from the CA once a year. This gives you the number every morning so you can act on it.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Sales revenue tallied</span><span class="flow-arrow">→</span><span class="flow-step">COGS from purchase records</span><span class="flow-arrow">→</span><span class="flow-step">Expenses subtracted</span><span class="flow-arrow">→</span><span class="flow-step">Net P&L shown</span><span class="flow-arrow">→</span><span class="flow-step">Trend chart updated</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">P&L Engine</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">COGS Calc</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Expense Integration</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Daily Dashboard</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-F3"><div class="wf-header" onclick="toggleWf('wf-F3')"><span class="wf-id" style="color:#fda4af">F3</span><span class="wf-title">Bank Reconciliation</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Upload your bank statement and the system matches every incoming payment to a bill automatically. Finding unmatched payments manually takes hours; this takes minutes. You know immediately if something is missing.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Bank statement uploaded (CSV/PDF)</span><span class="flow-arrow">→</span><span class="flow-step">Parser extracts transactions</span><span class="flow-arrow">→</span><span class="flow-step">Auto-match to bills by amount+date</span><span class="flow-arrow">→</span><span class="flow-step">Unmatched flagged for review</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Statement Parser</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Auto-Match Engine</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Unmatched Queue</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Manual Override</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-F4"><div class="wf-header" onclick="toggleWf('wf-F4')"><span class="wf-id" style="color:#fda4af">F4</span><span class="wf-title">Expense Tracking</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Shop rent, staff salaries, electricity bills, transport — all recorded as expenses. Your profit number is only real if all expenses are captured. Many shops under-count and think they're more profitable than they are.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Expense category selected</span><span class="flow-arrow">→</span><span class="flow-step">Amount + date entered</span><span class="flow-arrow">→</span><span class="flow-step">Receipt photo attached</span><span class="flow-arrow">→</span><span class="flow-step">Deducted from P&L</span><span class="flow-arrow">→</span><span class="flow-step">Monthly expense report</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Expense Categories</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Receipt Attachment</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Recurring Expense Setup</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Monthly Report</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-F5"><div class="wf-header" onclick="toggleWf('wf-F5')"><span class="wf-id" style="color:#fda4af">F5</span><span class="wf-title">Multi-Payment Mode Tracking</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Each sale is tagged — cash, UPI, card, credit, or partial. Reports show the split across all modes. You know how much is liquid cash vs credit — important for planning weekly supplier payments and cash flow.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Payment mode selected at billing</span><span class="flow-arrow">→</span><span class="flow-step">Split amounts recorded (partial)</span><span class="flow-arrow">→</span><span class="flow-step">Mode-wise report generated</span><span class="flow-arrow">→</span><span class="flow-step">Used in cash flow planning</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Payment Mode Tags</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Split Payment Support</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Mode-Wise Report</span><span class="element-chip" style="background:rgba(244,63,94,0.1);color:#fecdd3;border-color:rgba(244,63,94,0.2)">Cash Flow View</span></div></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- G. GST -->
+  <div class="cat-group" id="cat-g">
+    <div class="cat-header" onclick="toggleCat('cat-g')">
+      <span class="cat-icon">📜</span>
+      <span class="cat-name">GST &amp; Compliance</span>
+      <span class="cat-sub">Unavoidable — but made painless</span>
+      <span class="cat-tag" style="background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25)">3 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-G1"><div class="wf-header" onclick="toggleWf('wf-G1')"><span class="wf-id" style="color:#60a5fa">G1</span><span class="wf-title">GSTR-1 Report Generation</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">One click generates your complete GSTR-1 report — all outward sales in the exact format the GST portal needs. Filing GSTR-1 manually takes a CA 2–3 hours; this does it in under 2 minutes, saving your monthly retainer cost.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">All month's bills aggregated</span><span class="flow-arrow">→</span><span class="flow-step">Grouped by HSN &amp; tax rate</span><span class="flow-arrow">→</span><span class="flow-step">GSTIN-wise B2B / B2C split</span><span class="flow-arrow">→</span><span class="flow-step">JSON / Excel in GST portal format</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">GSTR-1 Aggregator</span><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">B2B/B2C Classifier</span><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">JSON Export</span><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Excel Export</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-G2"><div class="wf-header" onclick="toggleWf('wf-G2')"><span class="wf-id" style="color:#60a5fa">G2</span><span class="wf-title">GSTR-3B Summary</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">The system calculates your total tax payable — output tax collected minus input tax credit from purchases. Your actual tax liability, calculated correctly, every month. No surprises, no errors, no late filing penalties.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Output tax from sales</span><span class="flow-arrow">→</span><span class="flow-step">Input credit from purchases</span><span class="flow-arrow">→</span><span class="flow-step">Net tax payable = Output − ITC</span><span class="flow-arrow">→</span><span class="flow-step">3B summary displayed</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Output Tax Calc</span><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">ITC Tracker</span><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">3B Summary Report</span><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Payable Dashboard</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-G3"><div class="wf-header" onclick="toggleWf('wf-G3')"><span class="wf-id" style="color:#60a5fa">G3</span><span class="wf-title">HSN Code &amp; Tax Rate Auto-Assignment</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Every product has the correct HSN code and GST rate assigned. The right tax applies automatically at billing — wrong HSN codes invite GST notices. This eliminates human error completely at the billing stage.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Product added to catalog</span><span class="flow-arrow">→</span><span class="flow-step">HSN code assigned (manual or lookup)</span><span class="flow-arrow">→</span><span class="flow-step">GST rate auto-set from HSN</span><span class="flow-arrow">→</span><span class="flow-step">Rate applies on every bill automatically</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">HSN Master Table</span><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Rate Lookup</span><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">Auto-Apply at POS</span><span class="element-chip" style="background:rgba(59,130,246,0.1);color:#93c5fd;border-color:rgba(59,130,246,0.2)">HSN Validation</span></div></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- H. WhatsApp -->
+  <div class="cat-group" id="cat-h">
+    <div class="cat-header" onclick="toggleCat('cat-h')">
+      <span class="cat-icon">💬</span>
+      <span class="cat-name">Communication &amp; WhatsApp Automation</span>
+      <span class="cat-sub">Staying in touch without your staff spending time on it</span>
+      <span class="cat-tag" style="background:rgba(16,185,129,0.1);color:#34d399;border:1px solid rgba(16,185,129,0.2)">4 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-H1"><div class="wf-header" onclick="toggleWf('wf-H1')"><span class="wf-id" style="color:#34d399">H1</span><span class="wf-title">Instant Bill on WhatsApp</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">The moment a bill is created, the customer receives a PDF copy on WhatsApp — automatically, with zero staff action. Reduces paper costs and starts brand communication with every sale.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Bill saved in system</span><span class="flow-arrow">→</span><span class="flow-step">PDF generated</span><span class="flow-arrow">→</span><span class="flow-step">WhatsApp API called with customer number</span><span class="flow-arrow">→</span><span class="flow-step">PDF delivered</span><span class="flow-arrow">→</span><span class="flow-step">Delivery status logged</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">PDF Generator</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">WhatsApp Business API</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Auto-Trigger Hook</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Delivery Log</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-H2"><div class="wf-header" onclick="toggleWf('wf-H2')"><span class="wf-id" style="color:#34d399">H2</span><span class="wf-title">Payment Due Reminder</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">On the due date of a credit payment, the customer gets a polite WhatsApp reminder with the exact amount and a payment link. Recovery improves dramatically — professional reminders work better than awkward personal calls.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Due date in ledger</span><span class="flow-arrow">→</span><span class="flow-step">Daily scheduler runs</span><span class="flow-arrow">→</span><span class="flow-step">Matches today's dues</span><span class="flow-arrow">→</span><span class="flow-step">Template message + amount + link sent</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Payment Scheduler</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Template Engine</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">UPI/Payment Link</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">WhatsApp API</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-H3"><div class="wf-header" onclick="toggleWf('wf-H3')"><span class="wf-id" style="color:#34d399">H3</span><span class="wf-title">Service Repair Status Update</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">When a repair job moves to a new stage, the customer gets an automatic WhatsApp update. Customers stop calling to ask status — your staff are freed from answering the same question 20 times a day.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Technician updates job stage</span><span class="flow-arrow">→</span><span class="flow-step">Trigger checks if stage is key</span><span class="flow-arrow">→</span><span class="flow-step">WA message with job no. + stage sent</span><span class="flow-arrow">→</span><span class="flow-step">Customer informed without any staff action</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Stage Trigger Map</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">WhatsApp Templates</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Job-Customer Link</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Notification Log</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-H4"><div class="wf-header" onclick="toggleWf('wf-H4')"><span class="wf-id" style="color:#34d399">H4</span><span class="wf-title">Festival / Offer Campaign Broadcast</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Send a promotional message to your entire customer base — or a specific segment — in one click. Diwali offer, clearance sale, new arrivals. Existing customers are your cheapest source of new sales.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Owner selects segment (all / category / area)</span><span class="flow-arrow">→</span><span class="flow-step">Message composed</span><span class="flow-arrow">→</span><span class="flow-step">Broadcast scheduled or sent now</span><span class="flow-arrow">→</span><span class="flow-step">Delivery stats shown</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Segment Builder</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Broadcast Engine</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Message Composer</span><span class="element-chip" style="background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.2)">Delivery Analytics</span></div></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- I. Staff & Mobile -->
+  <div class="cat-group" id="cat-i">
+    <div class="cat-header" onclick="toggleCat('cat-i')">
+      <span class="cat-icon">📱</span>
+      <span class="cat-name">Staff &amp; Mobile Operations</span>
+      <span class="cat-sub">Empowering your team on the shop floor</span>
+      <span class="cat-tag" style="background:rgba(139,92,246,0.12);color:#c4b5fd;border:1px solid rgba(139,92,246,0.25)">4 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-I1"><div class="wf-header" onclick="toggleWf('wf-I1')"><span class="wf-id" style="color:#c4b5fd">I1</span><span class="wf-title">Salesman Mobile Stock Check</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">A salesman on the floor checks live stock of any product from their phone in 3 seconds — without walking to the stockroom. Faster answers to customers, less "let me check and come back" — which is often when customers leave.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Salesman opens mobile app</span><span class="flow-arrow">→</span><span class="flow-step">Searches product name / SKU</span><span class="flow-arrow">→</span><span class="flow-step">Live stock returned from server</span><span class="flow-arrow">→</span><span class="flow-step">Answer in 3 seconds</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Mobile App</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Real-Time Stock API</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Search by Name/SKU</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Role-Based Access</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-I2"><div class="wf-header" onclick="toggleWf('wf-I2')"><span class="wf-id" style="color:#c4b5fd">I2</span><span class="wf-title">Mobile Quotation Builder</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">From the show floor, a salesman builds a full quotation on their phone and shares it instantly on WhatsApp. Customers feel respected when they get a professional quote on the spot — closes deals faster and reduces comparison shopping.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Salesman adds items on mobile</span><span class="flow-arrow">→</span><span class="flow-step">Discount entered (within limit)</span><span class="flow-arrow">→</span><span class="flow-step">Quote preview shown</span><span class="flow-arrow">→</span><span class="flow-step">PDF generated</span><span class="flow-arrow">→</span><span class="flow-step">Shared on WhatsApp</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Mobile Quote Builder</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Discount Limits</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">PDF Generator</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">WhatsApp Share</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-I3"><div class="wf-header" onclick="toggleWf('wf-I3')"><span class="wf-id" style="color:#c4b5fd">I3</span><span class="wf-title">Attendance &amp; Shift Tracking</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Staff mark attendance on their mobile. The system records time-in and time-out every day. No more manipulated attendance registers — salary calculations become accurate and dispute-free.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Staff taps Check-In on app</span><span class="flow-arrow">→</span><span class="flow-step">Timestamp + location recorded</span><span class="flow-arrow">→</span><span class="flow-step">Check-out same way</span><span class="flow-arrow">→</span><span class="flow-step">Hours auto-calculated</span><span class="flow-arrow">→</span><span class="flow-step">Monthly attendance → salary report</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Mobile Check-In</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Timestamp Log</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Geofence Option</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Salary Report</span></div></div></div></div></div>
+      <div class="wf-card" id="wf-I4"><div class="wf-header" onclick="toggleWf('wf-I4')"><span class="wf-id" style="color:#c4b5fd">I4</span><span class="wf-title">Role-Based Access Control</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">A cashier sees only billing. A salesman sees only stock and quotes. The owner sees everything. A billing staff cannot see profit margins. A salesman cannot change prices. Sensitive data stays private — this is your core protection.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Owner defines roles</span><span class="flow-arrow">→</span><span class="flow-step">Permissions assigned per role</span><span class="flow-arrow">→</span><span class="flow-step">Staff login → role detected</span><span class="flow-arrow">→</span><span class="flow-step">Menu / data filtered by permissions</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Role Manager</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Permission Matrix</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Login Auth</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Activity Audit Log</span></div></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PART 2 — RESEARCH-BASED
+  ══════════════════════════════════ -->
+  <div class="part-header">
+    <span class="part-pill research">Part 2</span>
+    <span class="part-title">Research-Based Workflows</span>
+    <span class="part-count">21 workflows · 7 categories</span>
+  </div>
+
+  <!-- R1 -->
+  <div class="cat-group" id="cat-r1">
+    <div class="cat-header" onclick="toggleCat('cat-r1')">
+      <span class="cat-icon">🔍</span>
+      <span class="cat-name">Revenue Leakage Prevention</span>
+      <span class="cat-sub">Making invisible leakage of 8–12% revenue visible</span>
+      <span class="cat-tag" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">Research · 3 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-R1"><div class="wf-header" onclick="toggleWf('wf-R1')"><span class="wf-id" style="color:#a78bfa">R1</span><span class="wf-title">Real-Time Margin Monitoring Per Transaction</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Every bill is checked against purchase cost at billing time. If a discount drops margin below a set floor, a warning triggers before the bill is saved. In India's electronics retail, <span class="highlight">73% of margin erosion happens at the billing stage</span> through unauthorised discounts.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Discount entered by salesman</span><span class="flow-arrow">→</span><span class="flow-step">System calculates net margin</span><span class="flow-arrow">→</span><span class="flow-step">Compares with floor %</span><span class="flow-arrow">→</span><span class="flow-step">If below → warning shown</span><span class="flow-arrow">→</span><span class="flow-step">Requires manager approval to proceed</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Margin Floor Config</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Real-Time Check</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Warning Modal</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Manager Approval Flow</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Most ERPs show margins in monthly reports. By then the damage is done. This requires real-time flagging at point of sale — absent from standard systems.</p></div></div></div></div>
+      <div class="wf-card" id="wf-R2"><div class="wf-header" onclick="toggleWf('wf-R2')"><span class="wf-id" style="color:#a78bfa">R2</span><span class="wf-title">GST Input Credit Mismatch Alert</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Compares your purchase records with your supplier's GSTR-2A filings. If a supplier hasn't filed their returns, you cannot claim input credit. Retailers lose an average of <span class="highlight">₹18,000–₹45,000 per year</span> in unclaimed ITC due to supplier non-compliance.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Purchase bills logged</span><span class="flow-arrow">→</span><span class="flow-step">GSTR-2A pulled from GSTN API</span><span class="flow-arrow">→</span><span class="flow-step">Match by supplier GSTIN + invoice</span><span class="flow-arrow">→</span><span class="flow-step">Mismatches flagged</span><span class="flow-arrow">→</span><span class="flow-step">ITC at risk amount shown</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">GSTN API Integration</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">GSTR-2A Fetch</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Mismatch Engine</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">ITC Risk Report</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Standard ERPs generate your own GST reports but do not cross-check supplier filing status. This requires GSTN API integration not present in standard systems.</p></div></div></div></div>
+      <div class="wf-card" id="wf-R3"><div class="wf-header" onclick="toggleWf('wf-R3')"><span class="wf-id" style="color:#a78bfa">R3</span><span class="wf-title">Cash vs System Sales Reconciliation</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">At day end, compares expected cash (based on all bills) with what the cashier submits. Any gap is flagged with specific transactions that may explain it. <span class="highlight">56% of retail theft comes from within</span> — real-time reconciliation reduces this significantly.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">All cash bills summed</span><span class="flow-arrow">→</span><span class="flow-step">Expected drawer amount calculated</span><span class="flow-arrow">→</span><span class="flow-step">Cashier submits physical count</span><span class="flow-arrow">→</span><span class="flow-step">Gap identified</span><span class="flow-arrow">→</span><span class="flow-step">Suspect transactions highlighted</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Expected Cash Calc</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Physical Count Entry</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Gap Analysis</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Transaction Drill-Down</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Standard ERPs do basic day-end cash entry but don't perform intelligent gap analysis linking missing amounts to specific suspicious transactions.</p></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- R2 Dead Stock -->
+  <div class="cat-group" id="cat-r2">
+    <div class="cat-header" onclick="toggleCat('cat-r2')">
+      <span class="cat-icon">📉</span>
+      <span class="cat-name">Intelligent Dead Stock Liquidation</span>
+      <span class="cat-sub">Dead stock is a cash flow crisis in slow motion</span>
+      <span class="cat-tag" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">Research · 2 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-R4"><div class="wf-header" onclick="toggleWf('wf-R4')"><span class="wf-id" style="color:#a78bfa">R4</span><span class="wf-title">Slow-Moving Stock Velocity Scoring</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Each product gets a velocity score based on units sold per week over 12 weeks. Products below threshold are ranked by money locked in them. The average shop has <span class="highlight">18–24% of inventory as slow-moving</span> at any time — velocity scoring is far more actionable than a binary flag.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">12-week rolling sales per SKU</span><span class="flow-arrow">→</span><span class="flow-step">Weekly velocity = units/week</span><span class="flow-arrow">→</span><span class="flow-step">Score assigned (high/med/low)</span><span class="flow-arrow">→</span><span class="flow-step">Ranked by locked capital</span><span class="flow-arrow">→</span><span class="flow-step">Action list generated</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Velocity Calculator</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Rolling Window (12wk)</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Capital Lock Report</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Liquidation Priority List</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Most ERPs flag items not sold in X days — a simple binary. Velocity scoring is a continuous measure that's far more actionable for prioritizing clearance efforts.</p></div></div></div></div>
+      <div class="wf-card" id="wf-R5"><div class="wf-header" onclick="toggleWf('wf-R5')"><span class="wf-id" style="color:#a78bfa">R5</span><span class="wf-title">Auto Bundle Recommendation for Dead Stock</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Identifies which slow-moving items pair well with fast-moving ones — based on category, price point, and past transaction patterns. Suggests bundle offers automatically. A slow TV wall mount bundled with a selling TV moves both faster.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Dead stock list generated</span><span class="flow-arrow">→</span><span class="flow-step">Category + price range matched with fast movers</span><span class="flow-arrow">→</span><span class="flow-step">Historical co-purchase patterns checked</span><span class="flow-arrow">→</span><span class="flow-step">Bundle suggestions shown to owner</span><span class="flow-arrow">→</span><span class="flow-step">Bundle offer created in scheme engine</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Co-Purchase Analysis</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Category Match Logic</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Bundle Creator</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Scheme Integration</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>No standard retail ERP includes bundle recommendation logic. This requires category analysis built specifically for electronics retail.</p></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- R3 Credit Risk -->
+  <div class="cat-group" id="cat-r3">
+    <div class="cat-header" onclick="toggleCat('cat-r3')">
+      <span class="cat-icon">⚠️</span>
+      <span class="cat-name">Credit Risk &amp; Recovery Intelligence</span>
+      <span class="cat-sub">One of the top 3 reasons electronics retailers fail</span>
+      <span class="cat-tag" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">Research · 2 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-R6"><div class="wf-header" onclick="toggleWf('wf-R6')"><span class="wf-id" style="color:#a78bfa">R6</span><span class="wf-title">Customer Credit Risk Scoring</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Each credit customer gets a risk score based on past payment behaviour — on-time payments, typical delays, total credit usage history. <span class="highlight">80% of bad debt comes from 20% of customers</span> — early warning signs show in payment pattern data within the first 3 transactions.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Each payment recorded (on time / late / partial)</span><span class="flow-arrow">→</span><span class="flow-step">Score updated after each transaction</span><span class="flow-arrow">→</span><span class="flow-step">Risk tier assigned (Green/Amber/Red)</span><span class="flow-arrow">→</span><span class="flow-step">Credit limit suggested per tier</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Payment Behaviour DB</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Scoring Algorithm</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Risk Tier Display</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Credit Limit Engine</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Standard ERPs only show outstanding balances. Risk scoring prevents the problem before it becomes a write-off — absent from all standard systems.</p></div></div></div></div>
+      <div class="wf-card" id="wf-R7"><div class="wf-header" onclick="toggleWf('wf-R7')"><span class="wf-id" style="color:#a78bfa">R7</span><span class="wf-title">Escalation-Based Recovery Workflow</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Recovery in stages: Day 1 = WhatsApp reminder, Day 7 = personal call flag to owner, Day 30 = legal notice template generated. Each stage tracked and logged. Systematic escalation recovers <span class="highlight">40% more outstanding</span> than ad-hoc calling.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Overdue detected</span><span class="flow-arrow">→</span><span class="flow-step">Day 1: Auto WA reminder</span><span class="flow-arrow">→</span><span class="flow-step">Day 7: Owner alert for call</span><span class="flow-arrow">→</span><span class="flow-step">Day 30: Legal template generated</span><span class="flow-arrow">→</span><span class="flow-step">All actions logged</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Escalation Timer</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Stage-Based Actions</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Legal Notice Template</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Action Audit Trail</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Standard ERPs send one reminder. Multi-stage escalation with owner alerts and legal templates is entirely absent from basic systems.</p></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- R4 Demand -->
+  <div class="cat-group" id="cat-r4">
+    <div class="cat-header" onclick="toggleCat('cat-r4')">
+      <span class="cat-icon">📊</span>
+      <span class="cat-name">Demand Forecasting &amp; Smart Reordering</span>
+      <span class="cat-sub">Buying right — based on what your own data tells you</span>
+      <span class="cat-tag" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">Research · 3 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-R8"><div class="wf-header" onclick="toggleWf('wf-R8')"><span class="wf-id" style="color:#a78bfa">R8</span><span class="wf-title">Seasonal Demand Prediction</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Using 2–3 years of sales data, predicts which products will see higher demand next month — Diwali surge for TVs, summer surge for ACs, monsoon slowdown for certain categories. Electronics retail in India has some of the <span class="highlight">sharpest seasonal peaks</span> of any category.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Historical sales by month loaded</span><span class="flow-arrow">→</span><span class="flow-step">Seasonal index computed per category</span><span class="flow-arrow">→</span><span class="flow-step">Next month forecast generated</span><span class="flow-arrow">→</span><span class="flow-step">Recommended order quantities shown</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Historical Trend Engine</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Seasonal Index</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Forecast Report</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Order Qty Suggestion</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Standard ERPs work with present data only. Seasonal prediction requires historical trend analysis — a more advanced capability absent from basic systems.</p></div></div></div></div>
+      <div class="wf-card" id="wf-R9"><div class="wf-header" onclick="toggleWf('wf-R9')"><span class="wf-id" style="color:#a78bfa">R9</span><span class="wf-title">Supplier Lead Time Adjusted Reorder Point</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Calculates reorder points based on how many days your supplier typically takes to deliver — so you order with enough time to never run out. A TV out of stock on 23rd October, two days before Diwali, is a <span class="highlight">direct and permanent revenue loss.</span></p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Track actual delivery time per supplier</span><span class="flow-arrow">→</span><span class="flow-step">Average lead time computed</span><span class="flow-arrow">→</span><span class="flow-step">Reorder point = avg daily sales × lead time + safety stock</span><span class="flow-arrow">→</span><span class="flow-step">Dynamic reorder threshold updated</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Lead Time Tracker</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Dynamic Reorder Point</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Safety Stock Calc</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Per-Supplier Config</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Basic ERPs use fixed reorder points. Adjusting for supplier lead time variability requires per-supplier data tracking that most systems ignore.</p></div></div></div></div>
+      <div class="wf-card" id="wf-R10"><div class="wf-header" onclick="toggleWf('wf-R10')"><span class="wf-id" style="color:#a78bfa">R10</span><span class="wf-title">Brand Performance Comparison Reporting</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Monthly report comparing every brand on margin %, return rate, days to sell, and customer satisfaction — side by side. If Brand A gives 15% margin but 8% return rate, and Brand B gives 13% margin with 1% return rate, <span class="highlight">Brand B is actually more profitable.</span></p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Sales, returns, days-to-sell per brand</span><span class="flow-arrow">→</span><span class="flow-step">Margin after returns calculated</span><span class="flow-arrow">→</span><span class="flow-step">Multi-dimensional brand scorecard</span><span class="flow-arrow">→</span><span class="flow-step">Ranking report generated</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Brand Scorecard</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Return Rate Tracker</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Days-to-Sell Calc</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Multi-Metric Report</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>No standard ERP produces this multi-dimensional brand performance view. It requires custom report design combining multiple data points not available in off-the-shelf systems.</p></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- R5 Service -->
+  <div class="cat-group" id="cat-r5">
+    <div class="cat-header" onclick="toggleCat('cat-r5')">
+      <span class="cat-icon">💡</span>
+      <span class="cat-name">Service Center as a Profit Centre</span>
+      <span class="cat-sub">Research shows it can be a significant revenue stream</span>
+      <span class="cat-tag" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">Research · 2 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-R11"><div class="wf-header" onclick="toggleWf('wf-R11')"><span class="wf-id" style="color:#a78bfa">R11</span><span class="wf-title">Repair Profitability Tracking Per Job Type</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">For each repair type — screen replacement, board repair, gas refill — the system tracks parts cost, labour time, and what was charged. Profit per job type is calculated automatically. Many owners discover certain repairs cost more in staff time than they charge.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Job type tagged on job card</span><span class="flow-arrow">→</span><span class="flow-step">Parts cost logged</span><span class="flow-arrow">→</span><span class="flow-step">Labour time recorded</span><span class="flow-arrow">→</span><span class="flow-step">Charged amount entered</span><span class="flow-arrow">→</span><span class="flow-step">Profit per job type report</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Job Type Tags</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Labour Time Logger</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Parts Cost Tracker</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Profitability Report</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Service centers in most ERPs track jobs but not profit per job type. Time + cost + revenue must all be linked per job category — a combination missing from standard systems.</p></div></div></div></div>
+      <div class="wf-card" id="wf-R12"><div class="wf-header" onclick="toggleWf('wf-R12')"><span class="wf-id" style="color:#a78bfa">R12</span><span class="wf-title">Warranty Expiry Proactive Service Outreach</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Tracks when a customer's product warranty is about to expire — 30 days before — and automatically sends a message offering an extended warranty or AMC. Post-warranty AMC sales have <span class="highlight">60–70% conversion rates</span> because the customer already trusts you.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Warranty end date stored at sale</span><span class="flow-arrow">→</span><span class="flow-step">Daily check: 30 days to expiry?</span><span class="flow-arrow">→</span><span class="flow-step">Auto WA message with AMC offer</span><span class="flow-arrow">→</span><span class="flow-step">Leads to AMC sale / service booking</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Warranty Expiry Tracker</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">30-Day Alert Scheduler</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">AMC Offer Template</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">WhatsApp Outreach</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Requires warranty expiry dates tracked at sale level, linked to automated outreach — a combination missing from most standard ERPs.</p></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- R6 Staff -->
+  <div class="cat-group" id="cat-r6">
+    <div class="cat-header" onclick="toggleCat('cat-r6')">
+      <span class="cat-icon">🏆</span>
+      <span class="cat-name">Staff Accountability &amp; Performance</span>
+      <span class="cat-sub">You cannot manage what you cannot measure</span>
+      <span class="cat-tag" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">Research · 2 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-R13"><div class="wf-header" onclick="toggleWf('wf-R13')"><span class="wf-id" style="color:#a78bfa">R13</span><span class="wf-title">Salesman-Wise Revenue &amp; Margin Tracking</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Every bill is tagged to the salesman who made it. Daily/weekly/monthly: each person's total sales, average margin given, and number of bills. <span class="highlight">Top 20% of salespeople generate 50–60% of revenue</span> — knowing who they are lets you reward and learn from them.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Bills tagged to salesman ID</span><span class="flow-arrow">→</span><span class="flow-step">Revenue, margin, count aggregated</span><span class="flow-arrow">→</span><span class="flow-step">Leaderboard / report generated</span><span class="flow-arrow">→</span><span class="flow-step">Owner dashboard shows daily ranking</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Salesman Bill Tag</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Performance Dashboard</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Leaderboard</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Margin-per-Bill Report</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Standard ERPs have this feature but rarely display it prominently. It needs to be a dashboard metric the owner sees daily — not buried in reports.</p></div></div></div></div>
+      <div class="wf-card" id="wf-R14"><div class="wf-header" onclick="toggleWf('wf-R14')"><span class="wf-id" style="color:#a78bfa">R14</span><span class="wf-title">Discount Authority Limit Enforcement</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Each staff member has a maximum discount they can give without manager approval. Any bill exceeding their limit goes to the owner for a one-click WhatsApp approval. <span class="highlight">Uncontrolled discounting is the single largest margin drain</span> in electronics retail.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Salesman enters discount</span><span class="flow-arrow">→</span><span class="flow-step">System checks against their limit</span><span class="flow-arrow">→</span><span class="flow-step">If exceeded → approval request sent to owner on WA</span><span class="flow-arrow">→</span><span class="flow-step">Owner approves / rejects in one tap</span><span class="flow-arrow">→</span><span class="flow-step">Bill proceeds or revised</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Discount Limit per Role</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Approval Request</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Mobile Approval Flow</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Approval Audit Log</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Most ERPs allow discount limits but don't have a mobile approval workflow. The manager has to be physically present — impractical for owners who aren't always on-site.</p></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- R7 Dashboard -->
+  <div class="cat-group" id="cat-r7">
+    <div class="cat-header" onclick="toggleCat('cat-r7')">
+      <span class="cat-icon">🌅</span>
+      <span class="cat-name">Business Health Daily Dashboard</span>
+      <span class="cat-sub">What the owner should see every morning before opening</span>
+      <span class="cat-tag" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">Research · 3 Workflows</span>
+      <span class="wf-chevron">▼</span>
+    </div>
+    <div class="workflows-list">
+      <div class="wf-card" id="wf-R15"><div class="wf-header" onclick="toggleWf('wf-R15')"><span class="wf-id" style="color:#a78bfa">R15</span><span class="wf-title">Morning Business Pulse Report</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Every morning by 8 AM, a WhatsApp or app notification shows: yesterday's total sales, collections by mode, today's dues to collect, new low-stock alerts, and pending service jobs. Owners who review daily numbers make <span class="highlight">30% better inventory and pricing decisions.</span></p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">7:45 AM scheduler runs</span><span class="flow-arrow">→</span><span class="flow-step">Pulls yesterday's KPIs</span><span class="flow-arrow">→</span><span class="flow-step">Formats summary message</span><span class="flow-arrow">→</span><span class="flow-step">Pushes to owner WA / app at 8 AM</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Morning Scheduler</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">KPI Aggregator</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">WA Push Notification</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Configurable KPIs</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Most ERPs have dashboards but require you to log in and navigate. A pushed morning summary — delivered without any action from the owner — is far more consistently used and valuable.</p></div></div></div></div>
+      <div class="wf-card" id="wf-R16"><div class="wf-header" onclick="toggleWf('wf-R16')"><span class="wf-id" style="color:#a78bfa">R16</span><span class="wf-title">Weekly Cash Flow Projection</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Based on upcoming credit due dates, pending supplier payments, and typical daily sales patterns — shows a 7-day ahead view of expected cash position. The number one reason a profitable shop faces a cash crunch is <span class="highlight">poor cash flow visibility</span>.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Receivables due next 7 days</span><span class="flow-arrow">→</span><span class="flow-step">Supplier payables next 7 days</span><span class="flow-arrow">→</span><span class="flow-step">Avg daily sales estimate</span><span class="flow-arrow">→</span><span class="flow-step">Net cash per day projected</span><span class="flow-arrow">→</span><span class="flow-step">7-day chart displayed</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Receivables Engine</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Payables Engine</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Sales Forecast</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">7-Day Cash Chart</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Cash flow projection combining receivables, payables, and sales forecast is genuinely absent from standard retail ERPs. It exists in accounting software but not POS-first systems.</p></div></div></div></div>
+      <div class="wf-card" id="wf-R17"><div class="wf-header" onclick="toggleWf('wf-R17')"><span class="wf-id" style="color:#a78bfa">R17</span><span class="wf-title">Customer Acquisition vs Retention Split</span><span class="wf-chevron">▼</span></div><div class="wf-body"><div class="glass-panel"><div class="panel-section"><div class="panel-label"><span class="icon">📋</span> About</div><p class="panel-text">Every month, shows how many sales came from new customers vs returning ones, and compares average bill value of each group. Acquiring a new customer costs <span class="highlight">5–7× more than selling to an existing one</span>. This metric tells you before the problem becomes severe.</p></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">⚙️</span> Logic &amp; Flow</div><div class="logic-flow"><span class="flow-step">Each bill checked: first-time or returning customer</span><span class="flow-arrow">→</span><span class="flow-step">New/returning flag applied</span><span class="flow-arrow">→</span><span class="flow-step">Monthly split % calculated</span><span class="flow-arrow">→</span><span class="flow-step">Average bill value per group</span><span class="flow-arrow">→</span><span class="flow-step">Trend shown month-on-month</span></div></div><hr class="section-div"><div class="panel-section"><div class="panel-label"><span class="icon">🧩</span> Key Elements</div><div class="elements-grid"><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">New/Returning Flag</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Split % Report</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Avg Bill Comparison</span><span class="element-chip" style="background:rgba(139,92,246,0.1);color:#ddd6fe;border-color:rgba(139,92,246,0.2)">Month-on-Month Trend</span></div></div><div class="gap-box"><div class="gap-label">⚡ Gap in Standard ERPs</div><p>Requires tagging every bill as new or returning customer — a simple flag that most systems don't implement — and then surfacing it as a meaningful trend report.</p></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;margin-top:64px;padding-top:32px;border-top:1px solid var(--border)">
+    <p style="font-size:12px;color:var(--text-muted)">Trismart Automations &nbsp;·&nbsp; Retail ERP Workflow Analysis &nbsp;·&nbsp; June 2026 &nbsp;·&nbsp; Confidential</p>
+  </div>
+
+</div>
+
+<script>
+  function toggleCat(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+
+  function toggleWf(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+
+  function expandAll() {
+    document.querySelectorAll('.cat-group').forEach(g => g.classList.add('open'));
+  }
+
+  function collapseAll() {
+    document.querySelectorAll('.cat-group').forEach(g => g.classList.remove('open'));
+    document.querySelectorAll('.wf-card').forEach(c => c.classList.remove('open'));
+  }
+
+  function filterWorkflows(q) {
+    const term = q.toLowerCase().trim();
+    document.querySelectorAll('.cat-group').forEach(catGroup => {
+      let visibleCount = 0;
+      catGroup.querySelectorAll('.wf-card').forEach(card => {
+        const text = card.innerText.toLowerCase();
+        if (!term || text.includes(term)) {
+          card.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+      if (term) {
+        if (visibleCount === 0) {
+          catGroup.classList.add('all-hidden');
+        } else {
+          catGroup.classList.remove('all-hidden');
+          catGroup.classList.add('open');
+        }
+      } else {
+        catGroup.classList.remove('all-hidden');
+      }
+    });
+  }
+</script>
+</body>
+</html>

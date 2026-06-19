@@ -112,6 +112,66 @@
         "ownerId": { "type": "string" }
       },
       "required": ["id", "leadId", "amount", "date", "ownerId"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "A staff member or employee",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "branch": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "joinedAt": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["id", "name", "role", "branch", "status", "ownerId"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "A performance target assigned to an employee",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "title": { "type": "string" },
+        "targetValue": { "type": "number" },
+        "currentValue": { "type": "number" },
+        "deadline": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Active", "Achieved", "Failed"] },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["id", "employeeId", "title", "targetValue", "status", "ownerId"]
+    },
+    "Reward": {
+      "title": "Reward",
+      "description": "An incentive reward given to an employee",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "goalId": { "type": "string" },
+        "rewardAmount": { "type": "number" },
+        "description": { "type": "string" },
+        "awardedAt": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["id", "employeeId", "rewardAmount", "awardedAt", "ownerId"]
+    },
+    "Warehouse": {
+      "title": "Warehouse",
+      "description": "A storage or retail location",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["id", "name", "ownerId"]
     }
   },
   "firestore": {
@@ -142,6 +202,22 @@
     "/automation_audit/{auditId}": {
       "schema": { "$ref": "#/entities/AutomationAuditLog" },
       "description": "Automation logs"
+    },
+    "/employees/{employeeId}": {
+      "schema": { "$ref": "#/entities/Employee" },
+      "description": "Staff and employees"
+    },
+    "/goals/{goalId}": {
+      "schema": { "$ref": "#/entities/Goal" },
+      "description": "Performance goals"
+    },
+    "/rewards/{rewardId}": {
+      "schema": { "$ref": "#/entities/Reward" },
+      "description": "Employee rewards"
+    },
+    "/warehouses/{warehouseId}": {
+      "schema": { "$ref": "#/entities/Warehouse" },
+      "description": "Warehouses and showrooms"
     }
   }
 }

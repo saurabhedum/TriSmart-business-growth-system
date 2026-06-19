@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useData } from '../contexts/DataContext';
 import { addExpense, deleteExpense } from '../lib/db';
-import { Wallet, Plus, Trash2, Search, TrendingDown, DollarSign, IndianRupee } from 'lucide-react';
+import { Wallet, Plus, Trash2, Search, TrendingDown, IndianRupee } from 'lucide-react';
 
 export function ExpensesView() {
   const { expenses } = useData();

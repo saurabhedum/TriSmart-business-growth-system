@@ -11,7 +11,7 @@ import {
   Download,
   Calendar,
   User,
-  DollarSign,
+  IndianRupee,
   Clock,
   CheckCircle2,
   AlertCircle,

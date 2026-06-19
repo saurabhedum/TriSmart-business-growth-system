@@ -13,6 +13,7 @@ import {
   Languages,
   AlertTriangle,
   BookOpen,
+  GitBranch,
   MessageSquare,
   ClipboardList,
   HelpCircle,
@@ -33,7 +34,9 @@ import {
   UserCircle,
   ShoppingCart,
   Wallet,
-  TrendingUp
+  TrendingUp,
+  Award,
+  Building
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useState } from "react";
@@ -47,6 +50,11 @@ export const layers = [
   { id: "home", label: "Home", icon: Home, description: "Welcome Dashboard" },
   { id: "dashboard", label: "Analytics", icon: BarChart3, description: "Business Performance" },
   { id: "erp", label: "ERP Dashboard", icon: BookOpen, description: "Janta Gallery ERP" },
+  { id: "workflows", label: "Workflows", icon: GitBranch, description: "Workflow Analysis" },
+  { id: "team", label: "Team & Staff", icon: Users, description: "Manage Employees" },
+  { id: "staff_messages", label: "Staff Messages", icon: MessageSquare, description: "Chats & Uploads" },
+  { id: "incentives", label: "Performance & Rewards", icon: Award, description: "Incentive Engine" },
+  { id: "warehouses", label: "Warehouses & Showrooms", icon: Building, description: "Manage Locations" },
   { id: "retention", label: "Repeat Customers", icon: Repeat, description: "Bring back customers" },
   { id: "expenses", label: "Expenses", icon: Wallet, description: "Track Cashflow" },
   { id: "leads", label: "Customers", icon: Users, description: "Your customer list" },
@@ -66,7 +74,8 @@ export const layers = [
   { id: "themes", label: "Appearance", icon: Palette, description: "Change colors & look" }
 ];
 
-const mainGroupIds = ["dashboard", "erp", "leads", "interactions", "automation", "campaigns"];
+const mainGroupIds = ["dashboard", "erp", "workflows", "leads", "interactions", "automation", "campaigns"];
+const humanResourceGroupIds = ["team", "staff_messages", "incentives", "warehouses"];
 const salesGrowthGroupIds = ["expenses", "pos", "retention", "templates"];
 const workspaceGroupIds = ["home", "data_import", "inventory", "engine"];
 const billingSupportGroupIds = ["invoices", "quotations", "payments", "tickets"];
@@ -92,10 +101,12 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
   
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(true);
   const [isSalesGrowthOpen, setIsSalesGrowthOpen] = useState(true);
+  const [isHrOpen, setIsHrOpen] = useState(true);
   const [isBillingOpen, setIsBillingOpen] = useState(false);
   const [isSettingsSectionOpen, setIsSettingsSectionOpen] = useState(false);
 
   const mainLayers = layers.filter(l => mainGroupIds.includes(l.id));
+  const humanResourceLayers = layers.filter(l => humanResourceGroupIds.includes(l.id));
   const salesGrowthLayers = layers.filter(l => salesGrowthGroupIds.includes(l.id));
   const workspaceLayers = layers.filter(l => workspaceGroupIds.includes(l.id));
   const billingLayers = layers.filter(l => billingSupportGroupIds.includes(l.id));
@@ -187,6 +198,39 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
         <nav className="space-y-0.5 flex flex-col mb-4">
           {mainLayers.map(l => renderNavItem(l))}
         </nav>
+
+        {/* Human Resource Section */}
+        <div className="flex flex-col mb-4">
+          <button 
+            onClick={() => setIsHrOpen(!isHrOpen)}
+            className={cn("flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] py-2 px-2 hover:text-[var(--text-main)] transition-colors rounded-lg", !isExpanded && "justify-center")}
+          >
+            {isExpanded ? (
+               <div className="flex items-center gap-2">
+                 <Users className="w-4 h-4" />
+                 Human Resource
+               </div>
+            ) : (
+               <Users className="w-5 h-5" />
+            )}
+            {isExpanded && (
+               isHrOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
+          
+          <AnimatePresence>
+            {isHrOpen && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className={cn("flex flex-col space-y-0.5 overflow-hidden", isExpanded ? "mt-1" : "mt-2")}
+              >
+                {humanResourceLayers.map(l => renderNavItem(l, true))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Sales & Growth Section */}
         <div className="flex flex-col mb-4">

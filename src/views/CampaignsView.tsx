@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { 
   Megaphone, Plus, Search, Trash2, Play, Pause, Smartphone, Instagram, 
-  MessageCircle, X, AlertTriangle, TrendingUp, DollarSign, Target, Users, 
+  MessageCircle, X, AlertTriangle, TrendingUp, IndianRupee, Target, Users, 
   CheckCircle2, UserPlus, ArrowUpRight, Sparkles, Send, Copy, ArrowRight, CornerDownRight, Percent
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -282,7 +282,7 @@ export function CampaignsView() {
         <div className="p-6 neu-flat rounded-3xl flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
             <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Ad Invested Budget</span>
-            <DollarSign className="w-5 h-5 text-neutral-400" />
+            <IndianRupee className="w-5 h-5 text-neutral-400" />
           </div>
           <div>
             <h4 className="text-2xl font-black">{curSym}{globalBudget.toLocaleString()}</h4>

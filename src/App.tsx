@@ -26,6 +26,12 @@ import { PosView } from "./views/PosView";
 import { ExpensesView } from "./views/ExpensesView";
 import { TemplatesView } from "./views/TemplatesView";
 import { ErpView } from "./views/ErpView";
+import { WorkflowsView } from "./views/WorkflowsView";
+import { EmployeesView } from "./views/EmployeesView";
+import { RewardsView } from "./views/RewardsView";
+import { EmployeePortalView } from "./views/EmployeePortalView";
+import { StaffMessagesView } from "./views/StaffMessagesView";
+import { WarehousesView } from "./views/WarehousesView";
 import { AnimatePresence, motion } from "motion/react";
 import { Menu, X, AlertTriangle } from "lucide-react";
 import { auth, loginWithGoogle, logout } from './firebase';
@@ -52,6 +58,7 @@ export default function App() {
   const { leads, settings, isLoading } = useData();
   const [theme, _setTheme] = useState(() => localStorage.getItem("app_theme") || "midnight");
   const [uiStyle, _setUiStyle] = useState(() => localStorage.getItem("app_uiStyle") || "glassmorphism");
+  const [simulatedEmployee, setSimulatedEmployee] = useState<any>(null);
   
   const setTheme = (newTheme: string) => {
     _setTheme(newTheme);
@@ -175,6 +182,14 @@ export default function App() {
   useEffect(() => {
     if (user) {
       cleanupOldData();
+
+      const hashParam = window.location.hash.split('?')[1];
+      if (hashParam) {
+        const staffStaffId = new URLSearchParams(hashParam).get('staff');
+        if (staffStaffId) {
+           setActiveLayer('portal');
+        }
+      }
     }
   }, [user]);
 
@@ -238,6 +253,12 @@ export default function App() {
       case "themes": return <ThemeSettingsView key="themes" />;
       case "pos": return <PosView key="pos" />;
       case "erp": return <ErpView key="erp" />;
+      case "workflows": return <WorkflowsView key="workflows" />;
+      case "team": return <EmployeesView key="team" onSimulate={(emp: any) => { setSimulatedEmployee(emp); setActiveLayer("portal"); }} />;
+      case "portal": return <EmployeePortalView key="portal" simulatedEmployee={simulatedEmployee} />;
+      case "staff_messages": return <StaffMessagesView key="staff_messages" />;
+      case "incentives": return <RewardsView key="incentives" />;
+      case "warehouses": return <WarehousesView key="warehouses" />;
       case "expenses": return <ExpensesView key="expenses" />;
       default: 
         return (

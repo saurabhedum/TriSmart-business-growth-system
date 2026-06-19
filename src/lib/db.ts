@@ -425,6 +425,7 @@ export interface AppSettings {
   automationEnabled?: boolean;
   chatbotActive?: boolean;
   aiChatbotEnabled?: boolean;
+  enableAiFeatures?: boolean;
   ownerId?: string;
   automation?: AutomationSettings;
   chatbotCommands?: ChatbotCommand[];

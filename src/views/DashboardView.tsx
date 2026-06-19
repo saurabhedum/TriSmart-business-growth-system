@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useData } from "../contexts/DataContext";
 import { 
-  BarChart3, TrendingUp, Users, DollarSign, Package, 
+  BarChart3, TrendingUp, Users, IndianRupee, Package, 
   Target, AlertTriangle, Repeat, UserCheck, ArrowUpRight, 
   ArrowDownRight, RefreshCw, Smartphone
 } from "lucide-react";
@@ -220,7 +220,7 @@ export function DashboardView() {
                 <StatCard 
                   title="Daily Revenue" 
                   value={`₹${metrics.dailyRevenue.toLocaleString()}`} 
-                  icon={DollarSign}
+                  icon={IndianRupee}
                 />
                 <StatCard 
                   title="Est. Net Profit" 
@@ -336,7 +336,7 @@ export function DashboardView() {
                 <StatCard 
                   title="Customer LTV" 
                   value={`₹${metrics.ltv.toLocaleString()}`} 
-                  icon={DollarSign}
+                  icon={IndianRupee}
                   subtitle="Lifetime Value Avg"
                 />
              </div>
@@ -377,7 +377,7 @@ export function DashboardView() {
          {/* Profit Maximization */}
          <div className="bg-[var(--bg-color)] border border-black/5 dark:border-white/5 rounded-3xl p-8 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 opacity-5">
-               <DollarSign className="w-24 h-24" />
+               <IndianRupee className="w-24 h-24" />
             </div>
             <h3 className="text-sm font-black uppercase tracking-widest text-emerald-500 mb-6 flex items-center gap-2">
                Profit Maximization

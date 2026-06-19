@@ -330,7 +330,7 @@ export function ThemeSettingsView() {
             {/* Fake Stats */}
             <div className="grid grid-cols-3 gap-4 relative z-10">
               {[
-                { label: 'Revenue', value: '$84,230', change: '+12%' },
+                { label: 'Revenue', value: '₹84,230', change: '+12%' },
                 { label: 'Active Users', value: '1,429', change: '+5%' },
                 { label: 'Conversion', value: '4.2%', change: '-1%' },
               ].map((stat, i) => (

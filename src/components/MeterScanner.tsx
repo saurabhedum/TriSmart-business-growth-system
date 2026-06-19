@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Camera, RefreshCcw, X, Check, Loader2 } from 'lucide-react';
 import { analyzeMeterImage, MeterReadingResult } from '../lib/meterReader';
+import { useData } from '../contexts/DataContext';
 
 interface MeterScannerProps {
   onScan: (result: MeterReadingResult) => void;
@@ -9,6 +10,7 @@ interface MeterScannerProps {
 }
 
 export function MeterScanner({ onScan, onClose }: MeterScannerProps) {
+  const { settings } = useData();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isReady, setIsReady] = useState(false);
@@ -47,6 +49,11 @@ export function MeterScanner({ onScan, onClose }: MeterScannerProps) {
 
   const captureAndAnalyze = async () => {
     if (!videoRef.current || !canvasRef.current) return;
+    
+    if (!settings?.enableAiFeatures) {
+       setError("Global AI Capabilities are disabled in Settings > Security.");
+       return;
+    }
 
     setIsAnalyzing(true);
     const video = videoRef.current;
