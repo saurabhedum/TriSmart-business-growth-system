@@ -135,9 +135,18 @@ export function ExpensesView() {
          
          <div className="divide-y divide-black/5 dark:divide-white/5 overflow-y-auto max-h-[600px] custom-scrollbar">
             {filteredExpenses.length === 0 ? (
-              <div className="p-12 text-center text-[var(--text-muted)] flex flex-col items-center">
-                 <Wallet className="w-12 h-12 mb-4 opacity-50" />
-                 <p className="text-xs font-black uppercase tracking-widest">No expenses found</p>
+              <div className="py-24 text-center">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                    <Wallet className="w-8 h-8 text-[var(--text-muted)]" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-[var(--text-main)]">No expenses found</h4>
+                    <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                      Add a new expense record to get started. 
+                    </p>
+                  </div>
+                </div>
               </div>
             ) : filteredExpenses.map(expense => (
               <div key={expense.id} className="p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">

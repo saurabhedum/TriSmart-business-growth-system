@@ -36,7 +36,12 @@ import {
   Wallet,
   TrendingUp,
   Award,
-  Building
+  Building,
+  Activity,
+  Mail,
+  Table,
+  User,
+  StickyNote
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useState } from "react";
@@ -71,7 +76,11 @@ export const layers = [
   { id: "quotations", label: "Quotations", icon: ClipboardList, description: "Send estimates" },
   { id: "payments", label: "Payments", icon: CreditCard, description: "Track transactions" },
   { id: "tickets", label: "Support Tickets", icon: HeadphonesIcon, description: "Customer issues" },
-  { id: "themes", label: "Appearance", icon: Palette, description: "Change colors & look" }
+  { id: "telemetry", label: "System Status", icon: Activity, description: "Audit logs and health" },
+  { id: "themes", label: "Appearance", icon: Palette, description: "Change colors & look" },
+  { id: "gmail", label: "Gmail", icon: Mail, description: "Manage your emails" },
+  { id: "sheets", label: "Google Sheets", icon: Table, description: "Manage spreadsheets" },
+  { id: "contacts", label: "Contacts", icon: User, description: "Manage your contacts" }
 ];
 
 const mainGroupIds = ["dashboard", "erp", "workflows", "leads", "interactions", "automation", "campaigns"];
@@ -79,7 +88,8 @@ const humanResourceGroupIds = ["team", "staff_messages", "incentives", "warehous
 const salesGrowthGroupIds = ["expenses", "pos", "retention", "templates"];
 const workspaceGroupIds = ["home", "data_import", "inventory", "engine"];
 const billingSupportGroupIds = ["invoices", "quotations", "payments", "tickets"];
-const settingsGroupIds = ["social", "themes"];
+const settingsGroupIds = ["telemetry", "social", "themes"];
+const miscellaneousGroupIds = ["gmail", "sheets", "contacts"];
 
 interface SidebarProps {
   activeLayer: string;
@@ -104,6 +114,26 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
   const [isHrOpen, setIsHrOpen] = useState(true);
   const [isBillingOpen, setIsBillingOpen] = useState(false);
   const [isSettingsSectionOpen, setIsSettingsSectionOpen] = useState(false);
+  const [isMiscellaneousOpen, setIsMiscellaneousOpen] = useState(false);
+
+  const [hoveredItem, setHoveredItem] = useState<{
+    label: string;
+    description: string;
+    y: number;
+  } | null>(null);
+
+  const startTooltipHover = (e: React.MouseEvent<HTMLElement>, label: string, description?: string) => {
+    if (!isExpanded) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const sidebarRect = e.currentTarget.closest(".sidebar-container")?.getBoundingClientRect();
+      const y = rect.top - (sidebarRect?.top || 0) + rect.height / 2;
+      setHoveredItem({
+        label,
+        description: description || "",
+        y
+      });
+    }
+  };
 
   const mainLayers = layers.filter(l => mainGroupIds.includes(l.id));
   const humanResourceLayers = layers.filter(l => humanResourceGroupIds.includes(l.id));
@@ -111,6 +141,7 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
   const workspaceLayers = layers.filter(l => workspaceGroupIds.includes(l.id));
   const billingLayers = layers.filter(l => billingSupportGroupIds.includes(l.id));
   const settingsLayers = layers.filter(l => settingsGroupIds.includes(l.id));
+  const miscellaneousLayers = layers.filter(l => miscellaneousGroupIds.includes(l.id));
 
   const interactionsBadgeCount = interactions.filter(i => i.status === "Pending" || i.isPotentialBuyer).length;
 
@@ -123,7 +154,7 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
         onClick={() => setActiveLayer(layer.id)}
         data-tour={`nav-${layer.id}`}
         className={cn(
-          "w-full flex items-center gap-3 py-2 px-3 text-sm rounded-xl transition-all text-left font-medium group relative",
+          "w-full flex items-center gap-3 py-2 px-3 text-sm rounded-xl transition-all text-left font-medium group relative select-none",
           isActive 
             ? "bg-black/5 dark:bg-white/10 text-[var(--accent)] font-semibold" 
             : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-black/5 dark:hover:bg-white/5",
@@ -132,17 +163,13 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
         )}
         title={isExpanded ? t(layer.description) : `${t(layer.label)} - ${t(layer.description)}`}
         aria-label={t(layer.label)}
+        onMouseEnter={(e) => startTooltipHover(e, layer.label, layer.description)}
+        onMouseLeave={() => setHoveredItem(null)}
       >
         <Icon className={cn("shrink-0", isActive ? "text-[var(--accent)]" : "text-[var(--text-muted)] group-hover:text-[var(--text-main)]", !isExpanded ? "w-5 h-5 mx-auto" : "w-4 h-4")} />
         {isExpanded && <span className="truncate">{t(layer.label)}</span>}
         {isExpanded && layer.id === "interactions" && interactionsBadgeCount > 0 && (
            <span className="ml-auto bg-[var(--accent)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{interactionsBadgeCount}</span>
-        )}
-        
-        {!isExpanded && (
-          <div className="absolute left-full ml-4 px-3 py-2 bg-black/90 dark:bg-white/90 dark:text-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity font-medium shadow-xl">
-            {t(layer.label)}
-          </div>
         )}
       </motion.button>
     );
@@ -152,13 +179,15 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
     <motion.div 
       initial={false}
       animate={{ width: isExpanded ? 260 : 70 }}
-      className="neu-bg flex flex-col h-screen shrink-0 overflow-y-auto overflow-x-hidden transition-all duration-300 z-10 border-r border-black/5 dark:border-white/5 shadow-sm"
+      className="neu-bg flex flex-col h-screen shrink-0 overflow-visible relative transition-all duration-300 z-10 border-r border-black/5 dark:border-white/5 shadow-sm sidebar-container"
     >
       {/* Header Logo */}
       <div className="p-4 flex items-center justify-between sticky top-0 bg-[var(--bg-color)] z-10">
         <motion.div 
           onClick={() => setIsExpanded(!isExpanded)}
           className={cn("flex justify-between items-center bg-black/5 dark:bg-white/10 rounded-xl p-2 cursor-pointer hover:bg-black/10 dark:hover:bg-white/20 transition-colors", isExpanded ? "w-full" : "mx-auto")}
+          onMouseEnter={(e) => startTooltipHover(e, isExpanded ? "Collapse Sidebar" : "Expand Sidebar", appName || "Retail OS")}
+          onMouseLeave={() => setHoveredItem(null)}
         >
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-[var(--accent)] flex items-center justify-center text-white shrink-0">
@@ -172,7 +201,7 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
         </motion.div>
       </div>
       
-      <div className="flex-1 py-2 px-3 flex flex-col gap-1">
+      <div className="flex-1 py-2 px-3 flex flex-col gap-1 overflow-y-auto overflow-x-hidden scrollbar-thin select-none">
         {/* Search Bar */}
         <div className={cn("mb-4", isExpanded ? "px-1" : "px-0 flex justify-center")}>
           {isExpanded ? (
@@ -188,7 +217,11 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
               </div>
             </div>
           ) : (
-            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 cursor-text transition-colors">
+            <div 
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 cursor-text transition-colors"
+              onMouseEnter={(e) => startTooltipHover(e, "Search", "Search all sections (⌘K)")}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
               <Search className="w-5 h-5 text-[var(--text-muted)]" />
             </div>
           )}
@@ -204,6 +237,8 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
           <button 
             onClick={() => setIsHrOpen(!isHrOpen)}
             className={cn("flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] py-2 px-2 hover:text-[var(--text-main)] transition-colors rounded-lg", !isExpanded && "justify-center")}
+            onMouseEnter={(e) => startTooltipHover(e, "Human Resources", "Manage team, chats and rewards")}
+            onMouseLeave={() => setHoveredItem(null)}
           >
             {isExpanded ? (
                <div className="flex items-center gap-2">
@@ -237,6 +272,8 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
           <button 
             onClick={() => setIsSalesGrowthOpen(!isSalesGrowthOpen)}
             className={cn("flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] py-2 px-2 hover:text-[var(--text-main)] transition-colors rounded-lg", !isExpanded && "justify-center")}
+            onMouseEnter={(e) => startTooltipHover(e, "Sales & Growth", "Insights, expenses, POS, templates")}
+            onMouseLeave={() => setHoveredItem(null)}
           >
             {isExpanded ? (
                <div className="flex items-center gap-2">
@@ -270,6 +307,8 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
           <button 
             onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
             className={cn("flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] py-2 px-2 hover:text-[var(--text-main)] transition-colors rounded-lg", !isExpanded && "justify-center")}
+            onMouseEnter={(e) => startTooltipHover(e, "Workspace", "Control center, data upload, catalog")}
+            onMouseLeave={() => setHoveredItem(null)}
           >
             {isExpanded ? (
                <div className="flex items-center gap-2">
@@ -304,6 +343,8 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
             <button 
               onClick={() => setIsBillingOpen(!isBillingOpen)}
               className={cn("flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] py-2 px-2 hover:text-[var(--text-main)] transition-colors rounded-lg", !isExpanded && "justify-center")}
+              onMouseEnter={(e) => startTooltipHover(e, "Billing & Support", "Invoices, estimates, payments, tickets")}
+              onMouseLeave={() => setHoveredItem(null)}
             >
               {isExpanded ? (
                  <div className="flex items-center gap-2">
@@ -338,6 +379,8 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
           <button 
             onClick={() => setIsSettingsSectionOpen(!isSettingsSectionOpen)}
             className={cn("flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] py-2 px-2 hover:text-[var(--text-main)] transition-colors rounded-lg", !isExpanded && "justify-center")}
+            onMouseEnter={(e) => startTooltipHover(e, "Settings", "Configure integrations, themes, audits")}
+            onMouseLeave={() => setHoveredItem(null)}
           >
             {isExpanded ? (
                <div className="flex items-center gap-2">
@@ -365,28 +408,90 @@ export function Sidebar({ activeLayer, setActiveLayer, theme, setTheme, uiStyle,
             )}
           </AnimatePresence>
         </div>
+
+        {/* Miscellaneous Section */}
+        <div className="flex flex-col mb-4">
+          <button 
+            onClick={() => setIsMiscellaneousOpen(!isMiscellaneousOpen)}
+            className={cn("flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] py-2 px-2 hover:text-[var(--text-main)] transition-colors rounded-lg", !isExpanded && "justify-center")}
+            onMouseEnter={(e) => startTooltipHover(e, "Miscellaneous", "Synced Google integrations")}
+            onMouseLeave={() => setHoveredItem(null)}
+          >
+            {isExpanded ? (
+               <div className="flex items-center gap-2">
+                 <LayoutDashboard className="w-4 h-4" />
+                 Miscellaneous
+               </div>
+            ) : (
+               <LayoutDashboard className="w-5 h-5" />
+            )}
+            {isExpanded && (
+               isMiscellaneousOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
+          
+          <AnimatePresence>
+            {isMiscellaneousOpen && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className={cn("flex flex-col space-y-0.5 overflow-hidden", isExpanded ? "mt-1" : "mt-2")}
+              >
+                {miscellaneousLayers.map(l => renderNavItem(l, true))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         
         {/* Account Button */}
         <button 
           onClick={() => setActiveLayer("settings")}
           className={cn(
-            "w-full flex items-center gap-3 py-2 px-3 text-sm rounded-xl transition-all text-left font-medium", 
+            "w-full flex items-center gap-3 py-2 px-3 text-sm rounded-xl transition-all text-left font-medium mb-4", 
             activeLayer === "settings"
               ? "bg-black/5 dark:bg-white/10 text-[var(--accent)] font-semibold" 
               : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-black/5 dark:hover:bg-white/5",
             !isExpanded && "justify-center px-0"
           )}
+          onMouseEnter={(e) => startTooltipHover(e, "Account", "Manager Profile & Subscriptions")}
+          onMouseLeave={() => setHoveredItem(null)}
         >
            <UserCircle className={cn("shrink-0", activeLayer === "settings" ? "text-[var(--accent)]" : "", !isExpanded ? "mx-auto w-5 h-5" : "w-4 h-4")} />
            {isExpanded && <span className="truncate">Account</span>}
-           {!isExpanded && (
-             <div className="absolute left-full ml-4 px-3 py-2 bg-black/90 dark:bg-white/90 dark:text-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity font-medium shadow-xl">
-               Account
-             </div>
-           )}
         </button>
 
       </div>
+
+      {/* Floating Perfect Tooltip Outside of Overflow Containers */}
+      <AnimatePresence>
+        {!isExpanded && hoveredItem && (
+          <motion.div
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.12, ease: "easeOut" }}
+            className="absolute left-[78px] z-[9999] pointer-events-none whitespace-nowrap shadow-2xl"
+            style={{
+              top: hoveredItem.y,
+              transform: "translateY(-50%)"
+            }}
+          >
+            <div className="relative bg-zinc-950 dark:bg-zinc-900 text-white border border-zinc-800 dark:border-zinc-800/80 p-2 px-3.5 rounded-xl shadow-2xl flex flex-col gap-0.5 max-w-xs min-w-[120px] backdrop-blur-md">
+              {/* Pointing arrow */}
+              <div className="absolute top-1/2 -left-1 w-2 h-2 bg-zinc-950 dark:bg-zinc-900 border-b border-l border-zinc-800 dark:border-zinc-800/80 transform -translate-y-1/2 rotate-45" />
+              <div className="relative text-xs font-semibold text-zinc-100 leading-snug">
+                {t(hoveredItem.label)}
+              </div>
+              {hoveredItem.description && (
+                <div className="relative text-[10px] text-zinc-400 dark:text-zinc-500 font-normal leading-normal whitespace-normal">
+                  {t(hoveredItem.description)}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

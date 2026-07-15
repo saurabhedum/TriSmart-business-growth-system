@@ -24,6 +24,7 @@ import {
   AlertCircle,
   X,
   Loader2,
+  Share2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useData } from "../contexts/DataContext";
@@ -261,19 +262,19 @@ export function SocialAccountsView() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="col-span-full py-32 neu-pressed border-4 border-dashed border-black/[0.02] rounded-3xl flex flex-col items-center justify-center text-center px-10"
+              className="col-span-full py-24 text-center"
             >
-              <div className="flex gap-4 mb-4">
-                <Instagram className="w-12 h-12 text-neutral-200" />
-                <MessageCircle className="w-12 h-12 text-neutral-200" />
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                  <Share2 className="w-8 h-8 text-[var(--text-muted)]" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-[var(--text-main)]">No channels joined</h4>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                    Bridge your Instagram and WhatsApp accounts to start leveraging automated marketing.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-400">
-                No Channels Joined
-              </h3>
-              <p className="text-[10px] font-bold text-neutral-400 mt-2 max-w-[280px] leading-relaxed">
-                Bridge your Instagram and WhatsApp accounts to start leveraging
-                automated marketing.
-              </p>
             </motion.div>
           ) : (
             filteredAccounts.map((acc, i) => (

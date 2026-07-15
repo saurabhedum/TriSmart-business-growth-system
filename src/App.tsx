@@ -3,35 +3,42 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Sidebar } from "./components/Sidebar";
-import { DashboardView } from "./views/DashboardView";
-import { LeadsView } from "./views/LeadsView";
-import { InteractionHubView } from "./views/InteractionHubView";
-import { AutomationsView } from "./views/AutomationsView";
-import { SettingsView } from "./views/SettingsView";
-import { DataUploadView } from "./views/DataUploadView";
-import { RetentionView } from "./views/RetentionView";
-import { ThemeSettingsView } from "./views/ThemeSettingsView";
-import { CampaignsView } from "./views/CampaignsView";
-import { SocialAccountsView } from "./views/SocialAccountsView";
-import { EngineView } from "./views/EngineView";
-import { InventoryView } from "./views/InventoryView";
-import { HomeView } from "./views/HomeView";
-import { InvoicesView } from "./views/InvoicesView";
-import { QuotationsView } from "./views/QuotationsView";
-import { PaymentsView } from "./views/PaymentsView";
-import { TicketsView } from "./views/TicketsView";
-import { PosView } from "./views/PosView";
-import { ExpensesView } from "./views/ExpensesView";
-import { TemplatesView } from "./views/TemplatesView";
-import { ErpView } from "./views/ErpView";
-import { WorkflowsView } from "./views/WorkflowsView";
-import { EmployeesView } from "./views/EmployeesView";
-import { RewardsView } from "./views/RewardsView";
-import { EmployeePortalView } from "./views/EmployeePortalView";
-import { StaffMessagesView } from "./views/StaffMessagesView";
-import { WarehousesView } from "./views/WarehousesView";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+
+const DashboardView = lazy(() => import("./views/DashboardView").then(m => ({ default: m.DashboardView })));
+const LeadsView = lazy(() => import("./views/LeadsView").then(m => ({ default: m.LeadsView })));
+const InteractionHubView = lazy(() => import("./views/InteractionHubView").then(m => ({ default: m.InteractionHubView })));
+const AutomationsView = lazy(() => import("./views/AutomationsView").then(m => ({ default: m.AutomationsView })));
+const SettingsView = lazy(() => import("./views/SettingsView").then(m => ({ default: m.SettingsView })));
+const DataUploadView = lazy(() => import("./views/DataUploadView").then(m => ({ default: m.DataUploadView })));
+const RetentionView = lazy(() => import("./views/RetentionView").then(m => ({ default: m.RetentionView })));
+const ThemeSettingsView = lazy(() => import("./views/ThemeSettingsView").then(m => ({ default: m.ThemeSettingsView })));
+const CampaignsView = lazy(() => import("./views/CampaignsView").then(m => ({ default: m.CampaignsView })));
+const SocialAccountsView = lazy(() => import("./views/SocialAccountsView").then(m => ({ default: m.SocialAccountsView })));
+const EngineView = lazy(() => import("./views/EngineView").then(m => ({ default: m.EngineView })));
+const InventoryView = lazy(() => import("./views/InventoryView").then(m => ({ default: m.InventoryView })));
+const HomeView = lazy(() => import("./views/HomeView").then(m => ({ default: m.HomeView })));
+const InvoicesView = lazy(() => import("./views/InvoicesView").then(m => ({ default: m.InvoicesView })));
+const QuotationsView = lazy(() => import("./views/QuotationsView").then(m => ({ default: m.QuotationsView })));
+const PaymentsView = lazy(() => import("./views/PaymentsView").then(m => ({ default: m.PaymentsView })));
+const TicketsView = lazy(() => import("./views/TicketsView").then(m => ({ default: m.TicketsView })));
+const PosView = lazy(() => import("./views/PosView").then(m => ({ default: m.PosView })));
+const ExpensesView = lazy(() => import("./views/ExpensesView").then(m => ({ default: m.ExpensesView })));
+const TemplatesView = lazy(() => import("./views/TemplatesView").then(m => ({ default: m.TemplatesView })));
+const ErpView = lazy(() => import("./views/ErpView").then(m => ({ default: m.ErpView })));
+const WorkflowsView = lazy(() => import("./views/WorkflowsView").then(m => ({ default: m.WorkflowsView })));
+const EmployeesView = lazy(() => import("./views/EmployeesView").then(m => ({ default: m.EmployeesView })));
+const RewardsView = lazy(() => import("./views/RewardsView").then(m => ({ default: m.RewardsView })));
+const EmployeePortalView = lazy(() => import("./views/EmployeePortalView").then(m => ({ default: m.EmployeePortalView })));
+const StaffMessagesView = lazy(() => import("./views/StaffMessagesView").then(m => ({ default: m.StaffMessagesView })));
+const WarehousesView = lazy(() => import("./views/WarehousesView").then(m => ({ default: m.WarehousesView })));
+const SystemTelemetryView = lazy(() => import("./views/SystemTelemetryView").then(m => ({ default: m.SystemTelemetryView })));
+const GmailView = lazy(() => import("./views/GmailView").then(m => ({ default: m.GmailView })));
+const GoogleSheetsView = lazy(() => import("./views/GoogleSheetsView").then(m => ({ default: m.GoogleSheetsView })));
+const ContactsView = lazy(() => import("./views/ContactsView").then(m => ({ default: m.ContactsView })));
+
 import { AnimatePresence, motion } from "motion/react";
 import { Menu, X, AlertTriangle } from "lucide-react";
 import { auth, loginWithGoogle, logout } from './firebase';
@@ -54,7 +61,12 @@ export default function App() {
   const isPublicProductRoute = window.location.pathname.startsWith('/product/');
   const isPublicFormRoute = window.location.pathname.startsWith('/form/');
 
-  const [activeLayer, setActiveLayer] = useState("home");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const activeLayer = location.pathname === '/' ? 'home' : location.pathname.substring(1);
+  const setActiveLayer = (layer: string) => {
+    navigate(layer === 'home' ? '/' : `/${layer}`);
+  };
   const { leads, settings, isLoading } = useData();
   const [theme, _setTheme] = useState(() => localStorage.getItem("app_theme") || "midnight");
   const [uiStyle, _setUiStyle] = useState(() => localStorage.getItem("app_uiStyle") || "glassmorphism");
@@ -232,56 +244,71 @@ export default function App() {
   }, []);
 
   const renderView = () => {
-    switch (activeLayer) {
-      case "home": return <HomeView key="home" setActiveLayer={setActiveLayer} />;
-      case "dashboard": return <DashboardView key="dashboard" />;
-      case "leads": return <LeadsView key="leads" />;
-      case "campaigns": return <CampaignsView key="campaigns" />;
-      case "templates": return <TemplatesView key="templates" />;
-      case "data_import": return <DataUploadView key="data_import" />;
-      case "inventory": return <InventoryView key="inventory" />;
-      case "social": return <SocialAccountsView key="social" />;
-      case "interactions": return <InteractionHubView key="interactions" />;
-      case "automation": return <AutomationsView key="automation" />;
-      case "engine": return <EngineView key="engine" />;
-      case "retention": return <RetentionView key="retention" />;
-      case "invoices": return <InvoicesView key="invoices" />;
-      case "quotations": return <QuotationsView key="quotations" />;
-      case "payments": return <PaymentsView key="payments" />;
-      case "tickets": return <TicketsView key="tickets" />;
-      case "settings": return <SettingsView key="settings" />;
-      case "themes": return <ThemeSettingsView key="themes" />;
-      case "pos": return <PosView key="pos" />;
-      case "erp": return <ErpView key="erp" />;
-      case "workflows": return <WorkflowsView key="workflows" />;
-      case "team": return <EmployeesView key="team" onSimulate={(emp: any) => { setSimulatedEmployee(emp); setActiveLayer("portal"); }} />;
-      case "portal": return <EmployeePortalView key="portal" simulatedEmployee={simulatedEmployee} />;
-      case "staff_messages": return <StaffMessagesView key="staff_messages" />;
-      case "incentives": return <RewardsView key="incentives" />;
-      case "warehouses": return <WarehousesView key="warehouses" />;
-      case "expenses": return <ExpensesView key="expenses" />;
-      default: 
-        return (
+    return (
+      <Suspense fallback={
+        <div className="flex h-full items-center justify-center p-8">
           <motion.div 
-            key="construction"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col items-center justify-center h-[70vh] w-full"
-          >
-            <div className="p-8 neu-pressed rounded-3xl max-w-md w-full text-center space-y-6 flex flex-col items-center">
-              <div className="w-20 h-20 rounded-2xl neu-flat flex items-center justify-center text-accent">
-                <Menu className="w-10 h-10" />
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 rounded-full border-4 border-indigo-500 border-b-transparent animate-spin"
+          />
+        </div>
+      }>
+        <Routes>
+          <Route path="/" element={<HomeView key="home" setActiveLayer={setActiveLayer} />} />
+          <Route path="/dashboard" element={<DashboardView key="dashboard" />} />
+          <Route path="/leads" element={<LeadsView key="leads" />} />
+          <Route path="/campaigns" element={<CampaignsView key="campaigns" />} />
+          <Route path="/templates" element={<TemplatesView key="templates" />} />
+          <Route path="/data_import" element={<DataUploadView key="data_import" />} />
+          <Route path="/inventory" element={<InventoryView key="inventory" />} />
+          <Route path="/social" element={<SocialAccountsView key="social" />} />
+          <Route path="/interactions" element={<InteractionHubView key="interactions" />} />
+          <Route path="/automation" element={<AutomationsView key="automation" />} />
+          <Route path="/engine" element={<EngineView key="engine" />} />
+          <Route path="/retention" element={<RetentionView key="retention" />} />
+          <Route path="/invoices" element={<InvoicesView key="invoices" />} />
+          <Route path="/quotations" element={<QuotationsView key="quotations" />} />
+          <Route path="/payments" element={<PaymentsView key="payments" />} />
+          <Route path="/tickets" element={<TicketsView key="tickets" />} />
+          <Route path="/settings" element={<SettingsView key="settings" />} />
+          <Route path="/themes" element={<ThemeSettingsView key="themes" />} />
+          <Route path="/pos" element={<PosView key="pos" />} />
+          <Route path="/erp" element={<ErpView key="erp" />} />
+          <Route path="/workflows" element={<WorkflowsView key="workflows" />} />
+          <Route path="/team" element={<EmployeesView key="team" onSimulate={(emp: any) => { setSimulatedEmployee(emp); setActiveLayer("portal"); }} />} />
+          <Route path="/portal" element={<EmployeePortalView key="portal" simulatedEmployee={simulatedEmployee} />} />
+          <Route path="/staff_messages" element={<StaffMessagesView key="staff_messages" />} />
+          <Route path="/incentives" element={<RewardsView key="incentives" />} />
+          <Route path="/warehouses" element={<WarehousesView key="warehouses" />} />
+          <Route path="/telemetry" element={<SystemTelemetryView key="telemetry" />} />
+          <Route path="/expenses" element={<ExpensesView key="expenses" />} />
+          <Route path="/gmail" element={<GmailView key="gmail" />} />
+          <Route path="/sheets" element={<GoogleSheetsView key="sheets" />} />
+          <Route path="/contacts" element={<ContactsView key="contacts" />} />
+          <Route path="*" element={
+            <motion.div 
+              key="construction"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center justify-center h-[70vh] w-full"
+            >
+              <div className="p-8 neu-pressed rounded-3xl max-w-md w-full text-center space-y-6 flex flex-col items-center">
+                <div className="w-20 h-20 rounded-2xl neu-flat flex items-center justify-center text-accent">
+                  <Menu className="w-10 h-10" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight mb-2">View Under Construction</h2>
+                  <p className="text-sm neu-text-muted">This module is currently being integrated into the automation engine.</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight mb-2">View Under Construction</h2>
-                <p className="text-sm neu-text-muted">This module is currently being integrated into the automation engine.</p>
-              </div>
-            </div>
-          </motion.div>
-        );
-    }
+            </motion.div>
+          } />
+        </Routes>
+      </Suspense>
+    );
   };
 
   if (isPublicProductRoute) {
@@ -417,21 +444,6 @@ export default function App() {
     );
   }
 
-  if (isLoading || !settings) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center neu-bg neu-text space-y-6">
-        <motion.div 
-          animate={{ rotate: -360 }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-[inset_4px_4px_8px_rgba(0,0,0,0.1),inset_-4px_-4px_8px_rgba(255,255,255,0.7)]"
-        >
-          <div className="w-8 h-8 rounded-full border-4 border-indigo-500 border-b-transparent animate-spin"></div>
-        </motion.div>
-        <p className="text-sm font-bold tracking-widest text-indigo-500 uppercase">Loading Data...</p>
-      </div>
-    );
-  }
-
   return (
     <div className={`flex h-screen neu-bg font-sans neu-text overflow-hidden transition-colors duration-300 relative ${uiStyle === 'glassmorphism' ? 'bg-gradient-to-br from-[var(--bg-color)] to-slate-900/10' : ''}`}>
       <QuickStartTour />
@@ -528,18 +540,39 @@ export default function App() {
         </div>
         <div className="max-w-7xl mx-auto h-full">
           <ErrorBoundary>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeLayer}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="h-full"
-              >
-                {renderView()}
-              </motion.div>
-            </AnimatePresence>
+            {isLoading || !settings ? (
+              <div className="w-full h-full flex flex-col items-center justify-center min-h-[50vh]">
+                <div className="flex flex-col items-center justify-center space-y-6">
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                    className="w-12 h-12 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin flex items-center justify-center"
+                  />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-4 w-32 bg-black/5 dark:bg-white/10 rounded overflow-hidden relative">
+                      <motion.div 
+                        animate={{ x: ["-100%", "200%"] }} 
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }} 
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--accent)]/30 to-transparent w-1/2" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeLayer}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="h-full"
+                >
+                  {renderView()}
+                </motion.div>
+              </AnimatePresence>
+            )}
           </ErrorBoundary>
         </div>
       </main>

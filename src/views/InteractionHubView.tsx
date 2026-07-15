@@ -335,9 +335,20 @@ export function InteractionHubView() {
         )}
       </div>      <div className="space-y-4">
         {paginatedGroups.length === 0 ? (
-          <div className="text-center py-20 neu-text-muted font-bold uppercase tracking-widest text-xs">
-            No active {filter !== "All" ? filter.toLowerCase() : ""}{" "}
-            conversations found.
+          <div className="py-24 text-center">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                <MessageCircle className="w-8 h-8 text-neutral-400" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-neutral-600">No conversations found</h4>
+                <p className="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
+                  {filter !== "All"
+                    ? `No active ${filter.toLowerCase()} conversations found.`
+                    : "You have no unread messages or active chats."}
+                </p>
+              </div>
+            </div>
           </div>
         ) : (
           paginatedGroups.map((group) => (

@@ -15,7 +15,8 @@ import {
   Calendar,
   IndianRupee,
   Camera,
-  Upload
+  Upload,
+  Loader2
 } from "lucide-react";
 import { db, auth } from "../firebase";
 import { collection, getDocs, query, where, orderBy, addDoc, serverTimestamp } from "firebase/firestore";
@@ -251,8 +252,18 @@ export function EmployeePortalView({ simulatedEmployee }: { simulatedEmployee?: 
             </div>
 
             {goals.length === 0 ? (
-              <div className="neu-flat rounded-3xl p-8 text-center">
-                <p className="text-sm font-bold text-[var(--text-muted)]">No active targets at the moment. Take a break! ☕</p>
+              <div className="py-12 text-center">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center border-2 border-dashed border-black/10 dark:border-white/10">
+                    <Target className="w-8 h-8 text-[var(--text-muted)]" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-[var(--text-main)]">No active targets</h4>
+                    <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                      There are no active targets assigned to you at the moment. Take a break! ☕
+                    </p>
+                  </div>
+                </div>
               </div>
             ) : (
               goals.map(goal => (
@@ -377,13 +388,13 @@ export function EmployeePortalView({ simulatedEmployee }: { simulatedEmployee?: 
           </button>
           
           <button 
-             className="p-3 text-white bg-[var(--accent)] rounded-2xl shadow-lg relative overflow-hidden"
+             className="p-3 text-white bg-[var(--accent)] rounded-2xl shadow-lg relative overflow-hidden disabled:opacity-70"
              onClick={() => fileInputRef.current?.click()}
              disabled={isUploading}
           >
-            {isUploading ? <Upload className="w-6 h-6 animate-pulse" /> : <Camera className="w-6 h-6" />}
+            {isUploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Camera className="w-6 h-6" />}
             {isUploading && (
-               <div className="absolute bottom-0 left-0 h-1 bg-white/30" style={{ width: `${uploadProgress}%` }}></div>
+               <div className="absolute bottom-0 left-0 h-1 bg-white/30 transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
             )}
           </button>
           

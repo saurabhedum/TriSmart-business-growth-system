@@ -163,6 +163,8 @@ export function LeadsView() {
   const [targetLeadForm, setTargetLeadForm] = useState<Lead | null>(null);
   const [selectedLeadForProfile, setSelectedLeadForProfile] = useState<Lead | null>(null);
   const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingForm, setIsSendingForm] = useState(false);
   const [newLead, setNewLead] = useState<Partial<Lead>>({
     name: "",
     mobileNumber: "",
@@ -200,6 +202,7 @@ export function LeadsView() {
     e.preventDefault();
     if (!newLead.name || !newLead.mobileNumber) return;
 
+    setIsSubmitting(true);
     try {
       if (editingLeadId) {
         await updateLead({ id: editingLeadId, ...newLead } as Lead);
@@ -220,6 +223,8 @@ export function LeadsView() {
       toast.success(editingLeadId ? "Lead updated successfully" : "Lead added successfully");
     } catch (err: any) {
       toast.error('Error saving lead: ' + (err.message || ''));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -380,62 +385,66 @@ export function LeadsView() {
     const targets = bulkSendMode ? filteredLeads : (targetLeadForm ? [targetLeadForm] : []);
     if (targets.length === 0) return;
 
-    if (sendMethod === 'manual_wa') {
-      if (bulkSendMode) {
-        toast.error("Manual WhatsApp is only available for a single lead.");
-        return;
-      }
-      const lead = targets[0];
-      const cleanPhone = lead.mobileNumber.replace(/[^\d+]/g, '');
-      let finalPhone = cleanPhone;
-      if (!finalPhone.startsWith('+')) {
-         if (finalPhone.length === 10) finalPhone = '+91' + finalPhone;
-         else if (finalPhone.length > 10 && !finalPhone.startsWith('+')) finalPhone = '+' + finalPhone;
-      }
-      const formUrl = `${window.location.origin}/form/${theForm.id}?cid=${lead.id}`;
-      const message = encodeURIComponent(`Hi ${lead.name},\n\nPlease fill out this form: ${formUrl}`);
-      window.open(`https://wa.me/${finalPhone.replace('+', '')}?text=${message}`, '_blank');
-    } else {
-      const template = templates?.find(t => t.category === 'FORM_DISTRIBUTION');
-      if (!template) {
-         toast.error("No 'Form Distribution' template found. Navigate to Templates, click 'Seed Defaults', then try again.");
-         setIsSendFormModalOpen(false);
-         return;
-      }
+    setIsSendingForm(true);
+    try {
+      if (sendMethod === 'manual_wa') {
+        if (bulkSendMode) {
+          toast.error("Manual WhatsApp is only available for a single lead.");
+          return;
+        }
+        const lead = targets[0];
+        const cleanPhone = lead.mobileNumber.replace(/[^\d+]/g, '');
+        let finalPhone = cleanPhone;
+        if (!finalPhone.startsWith('+')) {
+           if (finalPhone.length === 10) finalPhone = '+91' + finalPhone;
+           else if (finalPhone.length > 10 && !finalPhone.startsWith('+')) finalPhone = '+' + finalPhone;
+        }
+        const formUrl = `${window.location.origin}/form/${theForm.id}?cid=${lead.id}`;
+        const message = encodeURIComponent(`Hi ${lead.name},\n\nPlease fill out this form: ${formUrl}`);
+        window.open(`https://wa.me/${finalPhone.replace('+', '')}?text=${message}`, '_blank');
+      } else {
+        const template = templates?.find(t => t.category === 'FORM_DISTRIBUTION');
+        if (!template) {
+           toast.error("No 'Form Distribution' template found. Navigate to Templates, click 'Seed Defaults', then try again.");
+           setIsSendFormModalOpen(false);
+           return;
+        }
 
-      toast.loading(`Sending form to ${targets.length} leads via ${sendMethod === 'api_wa' ? 'WhatsApp API' : 'Instagram API'}...`, { id: 'bulk-send' });
-      
-      let successCount = 0;
-      for (const lead of targets) {
-         const formUrl = `${window.location.origin}/form/${theForm.id}?cid=${lead.id}`;
-         const leadName = typeof lead.name === 'object' ? Object.values(lead.name).join(' ') : String(lead.name || 'Customer');
-         let finalPhone = lead.mobileNumber;
-         if (!finalPhone.startsWith('+') && finalPhone.length === 10) finalPhone = '+91' + finalPhone;
+        toast.loading(`Sending form to ${targets.length} leads via ${sendMethod === 'api_wa' ? 'WhatsApp API' : 'Instagram API'}...`, { id: 'bulk-send' });
+        
+        let successCount = 0;
+        for (const lead of targets) {
+           const formUrl = `${window.location.origin}/form/${theForm.id}?cid=${lead.id}`;
+           const leadName = typeof lead.name === 'object' ? Object.values(lead.name).join(' ') : String(lead.name || 'Customer');
+           let finalPhone = lead.mobileNumber;
+           if (!finalPhone.startsWith('+') && finalPhone.length === 10) finalPhone = '+91' + finalPhone;
 
-         let finalMessage = template.content;
-         if (finalMessage.includes('{{1}}')) finalMessage = finalMessage.replace('{{1}}', leadName);
-         if (finalMessage.includes('{{2}}')) finalMessage = finalMessage.replace('{{2}}', formUrl);
+           let finalMessage = template.content;
+           if (finalMessage.includes('{{1}}')) finalMessage = finalMessage.replace('{{1}}', leadName);
+           if (finalMessage.includes('{{2}}')) finalMessage = finalMessage.replace('{{2}}', formUrl);
 
-         try {
-            await whatsappService.sendMessage({
-               to: finalPhone,
-               message: finalMessage,
-               customTemplateName: template.metaTemplateId || undefined,
-               templateCategory: 'custom',
-               templateParams: [leadName, formUrl],
-               platform: sendMethod === 'api_ig' ? 'instagram' : 'whatsapp'
-            });
-            successCount++;
-         } catch(e) {
-            console.error(e);
-         }
+           try {
+              await whatsappService.sendMessage({
+                 to: finalPhone,
+                 message: finalMessage,
+                 customTemplateName: template.metaTemplateId || undefined,
+                 templateCategory: 'custom',
+                 templateParams: [leadName, formUrl],
+                 platform: sendMethod === 'api_ig' ? 'instagram' : 'whatsapp'
+              });
+              successCount++;
+           } catch(e) {
+              console.error(e);
+           }
+        }
+        
+        toast.success(`Form sent successfully to ${successCount} out of ${targets.length} leads!`, { id: 'bulk-send' });
       }
-      
-      toast.success(`Form sent successfully to ${successCount} out of ${targets.length} leads!`, { id: 'bulk-send' });
+    } finally {
+      setIsSendingForm(false);
+      setIsSendFormModalOpen(false);
+      setTargetLeadForm(null);
     }
-    
-    setIsSendFormModalOpen(false);
-    setTargetLeadForm(null);
   };
 
   return (
@@ -609,20 +618,40 @@ export function LeadsView() {
               </tr>
             </thead>
             <tbody>
-              {paginatedLeads.map((lead, index) => (
-                  <LeadTableRow 
-                    key={lead.id} 
-                    lead={lead} 
-                    index={index} 
-                    selected={selectedLeads.has(lead.id!)}
-                    onSelect={handleSelectLead}
-                    onRowClick={() => setSelectedLeadForProfile(lead)} 
-                    onMessage={handleMessageLead} 
-                    onEdit={handleEditLead}
-                    onSendForm={handleSendFormClick}
-                    onDelete={handleDeleteLead}
-                  />
-              ))}
+              {paginatedLeads.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-24 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <div className="w-16 h-16 rounded-full neu-pressed flex items-center justify-center">
+                        <Users className="w-8 h-8 text-neutral-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-neutral-600">No leads found</h4>
+                        <p className="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
+                          {searchQuery
+                            ? "Try adjusting your search query."
+                            : "Add a new lead manually or import them from a CSV."}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                paginatedLeads.map((lead, index) => (
+                    <LeadTableRow 
+                      key={lead.id} 
+                      lead={lead} 
+                      index={index} 
+                      selected={selectedLeads.has(lead.id!)}
+                      onSelect={handleSelectLead}
+                      onRowClick={() => setSelectedLeadForProfile(lead)} 
+                      onMessage={handleMessageLead} 
+                      onEdit={handleEditLead}
+                      onSendForm={handleSendFormClick}
+                      onDelete={handleDeleteLead}
+                    />
+                ))
+              )}
             </tbody>
           </table>
           {totalPages > 1 && (
@@ -734,9 +763,11 @@ export function LeadsView() {
               </div>
               <button 
                 type="submit"
-                className="col-span-2 py-4 bg-accent text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-accent/30 w-full mt-4"
+                disabled={isSubmitting}
+                className="col-span-2 py-4 bg-accent text-white rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-accent/30 w-full mt-4 flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                Create Lead
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                {editingLeadId ? (isSubmitting ? "Updating..." : "Update Lead") : (isSubmitting ? "Creating..." : "Create Lead")}
               </button>
             </form>
           </motion.div>
@@ -781,9 +812,11 @@ export function LeadsView() {
                </div>
                <button 
                   onClick={executeSendForm}
-                  className="w-full p-4 mt-2 bg-accent text-white font-black uppercase rounded-2xl flex items-center justify-center gap-2"
+                  disabled={isSendingForm}
+                  className="w-full p-4 mt-2 bg-accent text-white font-black uppercase rounded-2xl flex items-center justify-center gap-2 disabled:opacity-70"
                >
-                  <Send className="w-4 h-4" /> Execute Send
+                  {isSendingForm ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {isSendingForm ? "Processing..." : "Execute Send"}
                </button>
             </div>
           </motion.div>

@@ -310,10 +310,18 @@ export function TemplatesView() {
             </motion.div>
           ))}
           {filteredTemplates.length === 0 && (
-             <div className="col-span-full py-20 text-center flex flex-col items-center justify-center border-2 border-dashed border-black/10 dark:border-white/10 rounded-3xl">
-               <MessageSquare className="w-12 h-12 text-neutral-300 mb-4" />
-               <h3 className="text-xl font-black text-neutral-400">No Templates Found</h3>
-               <p className="text-neutral-500 mt-2">Create your first automated message template.</p>
+             <div className="col-span-full py-24 text-center">
+               <div className="flex flex-col items-center justify-center space-y-4">
+                 <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                   <MessageSquare className="w-8 h-8 text-[var(--text-muted)]" />
+                 </div>
+                 <div>
+                   <h4 className="text-sm font-bold text-[var(--text-main)]">No templates found</h4>
+                   <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                     Create your first automated message template.
+                   </p>
+                 </div>
+               </div>
              </div>
           )}
         </div>

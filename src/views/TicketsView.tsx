@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Trash2,
   Edit2,
-  CheckSquare
+  CheckSquare,
+  ListFilter
 } from "lucide-react";
 import { useData } from "../contexts/DataContext";
 import { SupportTicket, saveTicket, deleteTicket } from "../lib/db";
@@ -265,9 +266,26 @@ export function TicketsView() {
               </tr>
             </thead>
             <tbody>
-              {filteredTickets.map((ticket) => (
-                <motion.tr 
-                  key={ticket.id}
+              {filteredTickets.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-24 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                        <ListFilter className="w-8 h-8 text-[var(--text-muted)]" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-[var(--text-main)]">No tickets found</h4>
+                        <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                          Create a new ticket or adjust your filters. 
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredTickets.map((ticket) => (
+                  <motion.tr 
+                    key={ticket.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   onClick={() => openEdit(ticket, { stopPropagation: () => {} } as any)}
@@ -313,7 +331,8 @@ export function TicketsView() {
                     </button>
                   </td>
                 </motion.tr>
-              ))}
+              )))
+            }
             </tbody>
           </table>
         </div>

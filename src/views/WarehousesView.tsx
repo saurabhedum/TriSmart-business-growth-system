@@ -133,18 +133,24 @@ export function WarehousesView() {
           <div className="w-8 h-8 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin"></div>
         </div>
       ) : filteredWarehouses.length === 0 ? (
-        <div className="neu-flat rounded-2xl p-12 text-center">
-          <div className="w-16 h-16 neu-pressed rounded-2xl flex items-center justify-center text-[var(--accent)] mx-auto mb-4">
-            <Building className="w-8 h-8" />
+        <div className="py-24 text-center">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+              <Building className="w-8 h-8 text-[var(--text-muted)]" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-[var(--text-main)]">No locations found</h4>
+              <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                Manage all your showrooms and warehouses from one view. Add your first location to get started.
+              </p>
+            </div>
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-[var(--accent)] text-white px-6 py-2 rounded-xl font-bold mt-4"
+            >
+              Add Location
+            </button>
           </div>
-          <h3 className="text-lg font-bold">No Locations Connected</h3>
-          <p className="text-sm neu-text-muted mb-6">Manage all your showrooms and warehouses from one view.</p>
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-[var(--accent)] text-white px-6 py-2 rounded-xl font-bold"
-          >
-            Add First Location
-          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

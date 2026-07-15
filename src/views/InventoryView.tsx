@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Package, Folder, Plus, X, Tag, IndianRupee, Image as ImageIcon, Box, Link2, Search, TrendingUp, TrendingDown, PackageX, Brain, Sparkles, AlertTriangle, ChevronRight, ChevronDown, ListTree, LayoutGrid, Plane, Users, Send } from "lucide-react";
+import { Package, Folder, Plus, X, Tag, IndianRupee, Image as ImageIcon, Box, Link2, Search, TrendingUp, TrendingDown, PackageX, Brain, Sparkles, AlertTriangle, ChevronRight, ChevronDown, ListTree, LayoutGrid, Plane, Users, Send, Loader2 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { auth } from "../firebase";
 import { 
@@ -178,6 +178,10 @@ export function InventoryView() {
     status: 'active'
   });
 
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [isSavingItem, setIsSavingItem] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void}>({isOpen: false, title: '', message: '', onConfirm: () => {}});
 
   const [shareItemModalOpen, setShareItemModalOpen] = useState(false);
@@ -204,13 +208,18 @@ export function InventoryView() {
   const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
-    await saveInventoryCategory({ 
-      name: newCategoryName, 
-      parentId: newCategoryParentId || undefined 
-    });
-    setIsCategoryModalOpen(false);
-    setNewCategoryName("");
-    setNewCategoryParentId(null);
+    setIsSavingCategory(true);
+    try {
+      await saveInventoryCategory({ 
+        name: newCategoryName, 
+        parentId: newCategoryParentId || undefined 
+      });
+      setIsCategoryModalOpen(false);
+      setNewCategoryName("");
+      setNewCategoryParentId(null);
+    } finally {
+      setIsSavingCategory(false);
+    }
   };
 
   const handleDeleteCategory = async (id: string, e: React.MouseEvent) => {
@@ -233,9 +242,14 @@ export function InventoryView() {
       toast.error("Please select a category first.");
       return;
     }
-    await saveInventoryItem({ ...newItem, categoryId: activeCategoryId });
-    setIsItemModalOpen(false);
-    setNewItem({ name: '', price: 0, stock: 0, description: '', imageUrl: '', status: 'active', specifications: '' });
+    setIsSavingItem(true);
+    try {
+      await saveInventoryItem({ ...newItem, categoryId: activeCategoryId });
+      setIsItemModalOpen(false);
+      setNewItem({ name: '', price: 0, stock: 0, description: '', imageUrl: '', status: 'active', specifications: '' });
+    } finally {
+      setIsSavingItem(false);
+    }
   };
 
   const handleEditItem = (item: InventoryItem, e: React.MouseEvent) => {
@@ -278,6 +292,7 @@ export function InventoryView() {
 
   const handleBulkImport = async () => {
     if (!importText.trim() || !activeCategoryId) return;
+    setIsImporting(true);
     try {
       const rows = importText.split('\n').filter(r => r.trim());
       const newItemsPromises = rows.map(row => {
@@ -297,6 +312,8 @@ export function InventoryView() {
       toast.success(`Successfully imported ${newItemsPromises.length} items`);
     } catch (err) {
       toast.error("Failed to parse import data. Make sure it's comma separated: Name, Price, Stock, Status");
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -318,6 +335,7 @@ export function InventoryView() {
       return;
     }
 
+    setIsSharing(true);
     // API Mode
     const toastId = toast.loading(`Sending via ${shareMethod === 'whatsapp' ? 'WhatsApp API' : 'Instagram API'}...`);
     try {
@@ -369,6 +387,8 @@ export function InventoryView() {
       setShareItemModalOpen(false);
     } catch (e: any) {
       toast.error(`Failed to send: ${e.message}`, { id: toastId });
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -713,16 +733,24 @@ export function InventoryView() {
              </div>
 
              {filteredItems.length === 0 ? (
-                <div className="py-24 flex flex-col items-center justify-center text-center bg-neutral-50 dark:bg-neutral-900/50 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-3xl">
-                   <Box className="w-12 h-12 text-neutral-300 mb-4" />
-                   <h4 className="text-sm font-bold text-neutral-600 dark:text-neutral-400">No products found</h4>
-                   {searchQuery ? (
-                     <p className="text-xs text-neutral-500 mt-1">Try adjusting your search query.</p>
-                   ) : activeCategoryId ? (
-                     <p className="text-xs text-neutral-500 mt-1">Add a new product or import from CSV to get started.</p>
-                   ) : (
-                     <p className="text-xs text-neutral-500 mt-1">Select a category on the left to add products.</p>
-                   )}
+                <div className="py-24 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                      <Box className="w-8 h-8 text-[var(--text-muted)]" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-[var(--text-main)]">No products found</h4>
+                      <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                        {searchQuery ? (
+                          "Try adjusting your search query."
+                        ) : activeCategoryId ? (
+                          "Add a new product or import from CSV to get started."
+                        ) : (
+                          "Select a category on the left to add products."
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 </div>
              ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -1115,10 +1143,11 @@ export function InventoryView() {
                     </button>
                     <button 
                       onClick={handleBulkImport}
-                      disabled={!importText.trim()}
-                      className="px-6 py-3 bg-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold flex-1 shadow-sm transition-all"
+                      disabled={!importText.trim() || isImporting}
+                      className="px-6 py-3 bg-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold flex-1 shadow-sm transition-all flex items-center justify-center gap-2"
                     >
-                       Start Import
+                       {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                       {isImporting ? "Importing..." : "Start Import"}
                     </button>
                   </div>
                 </div>
@@ -1232,9 +1261,11 @@ export function InventoryView() {
                     </button>
                     <button 
                       type="submit" 
-                      className="flex-1 py-3.5 bg-accent hover:bg-accent/90 text-white rounded-xl font-bold shadow-sm transition-all border border-accent"
+                      disabled={isSavingItem}
+                      className="flex-1 py-3.5 bg-accent hover:bg-accent/90 text-white rounded-xl font-bold shadow-sm transition-all border border-accent flex items-center justify-center gap-2"
                     >
-                       Save Product
+                       {isSavingItem ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                       {isSavingItem ? "Saving..." : "Save Product"}
                     </button>
                   </div>
                 </form>
@@ -1343,15 +1374,16 @@ export function InventoryView() {
                       <p className="text-[10px] text-neutral-500 mt-1">Comma separated. Make sure numbers have country codes without + or 00.</p>
                    </div>
                    
-                   <div className="pt-4">
-                      <button
-                         onClick={handleShareProductSend}
-                         className="w-full py-4 bg-accent hover:bg-accent/90 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
-                      >
-                         <Plane className="w-5 h-5 fill-current" />
-                         Shoot to {shareRecipients ? shareRecipients.split(',').filter(Boolean).length : 0} Leads
-                      </button>
-                   </div>
+                    <div className="pt-4">
+                       <button
+                          onClick={handleShareProductSend}
+                          disabled={isSharing}
+                          className="w-full py-4 bg-accent hover:bg-accent/90 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-70"
+                       >
+                          {isSharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plane className="w-5 h-5 fill-current" />}
+                          {isSharing ? "Sending..." : `Shoot to ${shareRecipients ? shareRecipients.split(',').filter(Boolean).length : 0} Leads`}
+                       </button>
+                    </div>
                 </div>
              </motion.div>
           </motion.div>

@@ -94,9 +94,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const unsubAuth = auth.onAuthStateChanged((user) => {
       if (user) {
+        setIsLoading(true);
         clearSubscriptions();
         unsubs.push(subscribeToLeads(setLeads));
-        unsubs.push(subscribeToSettings(setSettings));
+        unsubs.push(subscribeToSettings((newSettings) => {
+          setSettings(newSettings);
+          setIsLoading(false);
+        }));
         unsubs.push(subscribeToInteractions(setInteractions));
         unsubs.push(subscribeToTemplates(setTemplates));
         unsubs.push(subscribeToReports(setReports));
@@ -113,8 +117,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         unsubs.push(subscribeToPayments(setPayments));
         unsubs.push(subscribeToTickets(setTickets));
         unsubs.push(subscribeToForms(setForms));
-
-        setIsLoading(false);
       } else {
         clearSubscriptions();
         setLeads([]);

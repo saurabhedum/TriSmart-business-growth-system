@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X, Loader2 } from "lucide-react";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -25,6 +25,7 @@ export function ConfirmModal({
   cancelText = "Cancel",
   isDestructive = false,
   showCancel = true,
+  isLoading = false,
   children
 }: ConfirmModalProps) {
   return (
@@ -75,14 +76,16 @@ export function ConfirmModal({
               <button 
                 onClick={() => {
                   onConfirm();
-                  onClose();
+                  if (!isLoading) onClose();
                 }}
-                className={`px-6 py-2 rounded-xl font-bold text-sm text-white shadow-lg transition-all ${
+                disabled={isLoading}
+                className={`px-6 py-2 rounded-xl font-bold text-sm text-white shadow-lg transition-all flex items-center justify-center gap-2 ${
                   isDestructive 
                     ? 'bg-rose-600 shadow-rose-500/30 hover:bg-rose-700' 
                     : 'bg-accent shadow-accent/30 hover:bg-blue-700'
-                }`}
+                } disabled:opacity-50`}
               >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 {confirmText}
               </button>
             </div>

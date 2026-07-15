@@ -98,12 +98,18 @@ export function StaffMessagesView() {
           <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
         </div>
       ) : messages.length === 0 ? (
-        <div className="text-center py-20 bg-[var(--bg-color)] rounded-3xl border border-black/5 dark:border-white/5 shadow-sm">
-           <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-400 opacity-50" />
-           <h3 className="text-xl font-bold mb-2">No Messages Yet</h3>
-           <p className="text-[var(--text-muted)] max-w-sm mx-auto">
-             When staff take photos or send messages from their mobile portal, they will appear here in real-time.
-           </p>
+        <div className="py-24 text-center">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+              <MessageSquare className="w-8 h-8 text-[var(--text-muted)]" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-[var(--text-main)]">No Messages Yet</h4>
+              <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                When staff take photos or send messages from their mobile portal, they will appear here in real-time.
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

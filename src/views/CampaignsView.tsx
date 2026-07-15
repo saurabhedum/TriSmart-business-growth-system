@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useData } from "../contexts/DataContext";
+import { auth } from "../firebase";
 import { 
   saveCampaign, deleteCampaign, updateCampaignStatus, addLead, updateLead, Lead, MarketingCampaign 
 } from "../lib/db";
@@ -172,87 +173,43 @@ export function CampaignsView() {
           // Close dialog early to avoid stale state freeze
           setConfirmDialog(prev => ({ ...prev, isOpen: false }));
           
-          let successCount = 0;
-          let failCount = 0;
-          
-          const toastId = toast.loading(`Broadcasting to ${targetLeads.length} leads...`);
+          const toastId = toast.loading(`Targeting ${targetLeads.length} leads via Secure Backend Engine...`);
 
-          // Process sending to leads sequentially or in parallel
-          for (const lead of targetLeads) {
-            try {
-              if (camp.channel === "WhatsApp") {
-                if (!settings?.whatsappApiToken || !settings?.whatsappPhoneId) {
-                  throw new Error("Missing WhatsApp configuration.");
-                }
-                const toPhone = lead.mobileNumber.replace(/\D/g, "");
-                if (!toPhone) throw new Error("No phone number");
-                
-                const res = await fetch(
-                  `https://graph.facebook.com/v18.0/${settings.whatsappPhoneId}/messages`,
-                  {
-                    method: "POST",
-                    headers: {
-                      Authorization: `Bearer ${settings.whatsappApiToken}`,
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      messaging_product: "whatsapp",
-                      recipient_type: "individual",
-                      to: toPhone,
-                      type: "text",
-                      text: {
-                        body: camp.messageTemplate,
-                      },
-                    }),
-                  }
-                );
-                
-                if (res.ok) successCount++;
-                else failCount++;
-              } else if (camp.channel === "Instagram") {
-                // Assuming we use Instagram account ID & token, and lead's Instagram ID is stored in lead.mobileNumber or lead.email temporarily if it's social leads
-                // Need to match lead with their IG ID. If lead mobileNumber or email has it. Actually, leads from Instagram usually have fromId stored somewhere, but here we can only assume mobileNumber / instagram Handle.
-                // Standard Instagram graph API to send message requires recipient ID (IGSID)
-                if (!settings?.instaApiToken) throw new Error("Missing Instagram token.");
-                
-                // Usually we'd map lead to their IGSID. If we don't have it explicitly, we might fail.
-                const recipientId = lead.instagramId || lead.mobileNumber; 
-                if (!recipientId) throw new Error("No Instagram Recipient ID");
-                
-                const payload = {
-                  recipient: { id: recipientId },
-                  message: { text: camp.messageTemplate }
-                };
-                const res = await fetch(`https://graph.facebook.com/v18.0/me/messages?access_token=${settings.instaApiToken}`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(payload)
-                });
-                
-                if (res.ok) successCount++;
-                else failCount++;
-              } else {
-                successCount++; // For Email or others without immediate API config
-              }
-            } catch (err) {
-              failCount++;
-            }
+          const res = await fetch("/api/wa/broadcast", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+               ownerId: auth.currentUser?.uid,
+               message: camp.messageTemplate,
+               apiKey: settings?.whatsappApiToken,
+               phoneId: settings?.whatsappPhoneId,
+               customTemplateName: camp.whatsappTemplateName,
+               recipients: targetLeads.map(l => ({ 
+                  id: l.id, 
+                  name: l.name, 
+                  mobileNumber: l.mobileNumber,
+                  instagramId: l.instagramId
+               })),
+               method: camp.channel === "Instagram" ? "instagram" : "whatsapp"
+            })
+          });
+
+          if (!res.ok) {
+             const data = await res.json().catch(() => ({}));
+             throw new Error(data.error || "Broadcast Engine rejected the request");
           }
 
+          const responseData = await res.json();
           toast.dismiss(toastId);
           
-          if (successCount > 0) {
-            toast.success(`🚀 Broadcast sent! (${successCount} succeeding, ${failCount} failed)`);
-            const newSentCount = (camp.sentCount || 0) + successCount;
-            await saveCampaign({
-              ...camp,
-              sentCount: newSentCount
-            });
-          } else {
-            toast.error(`❌ Broadcast failed. (${failCount} failures). Check settings and recipient info.`);
-          }
+          toast.success(`🚀 Broadcast Campaign Queued! Processing in background.`);
+          const newSentCount = (camp.sentCount || 0) + targetLeads.length;
+          await saveCampaign({
+            ...camp,
+            sentCount: newSentCount
+          });
         } catch (err: any) {
-          toast.error("Fail to broadcast: " + err.message);
+          toast.error("Fail to sequence broadcast: " + err.message);
         }
       }
     });
@@ -349,11 +306,19 @@ export function CampaignsView() {
             <motion.div 
                initial={{ opacity: 0 }}
                animate={{ opacity: 1 }}
-               className="py-24 neu-pressed border-2 border-dashed border-black/[0.05] rounded-3xl flex flex-col items-center justify-center text-center"
+               className="py-12 text-center"
             >
-               <Megaphone className="w-12 h-12 text-neutral-300 mb-4" />
-               <h3 className="text-sm font-black uppercase tracking-widest text-neutral-500">No campaigns launched</h3>
-               <p className="text-xs font-bold text-neutral-400 mt-2">Launch your first Meta Approved WhatsApp or Instagram campaign to record ROI.</p>
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                  <Megaphone className="w-8 h-8 text-[var(--text-muted)]" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-[var(--text-main)]">No campaigns launched</h4>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                    Launch your first Meta Approved WhatsApp or Instagram campaign to record ROI.
+                  </p>
+                </div>
+              </div>
             </motion.div>
           ) : (
             filteredCampaigns.map((camp, i) => {

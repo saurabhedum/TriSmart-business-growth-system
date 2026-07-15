@@ -255,9 +255,18 @@ export function RewardsView() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
               {goals.length === 0 ? (
-                <div className="col-span-full neu-flat rounded-2xl p-12 text-center">
-                  <Target className="w-12 h-12 text-[var(--text-muted)] mx-auto mb-4 opacity-20" />
-                  <p className="font-bold text-[var(--text-muted)]">No active targets found.</p>
+                <div className="col-span-full py-12 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center border-2 border-dashed border-black/10 dark:border-white/10">
+                      <Target className="w-8 h-8 text-[var(--text-muted)]" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-[var(--text-main)]">No active targets</h4>
+                      <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                        Create a new target to get started.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 goals.map(goal => (

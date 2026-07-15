@@ -20,7 +20,8 @@ import {
   Trash2,
   CheckSquare,
   Settings2,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Loader2
 } from "lucide-react";
 import { db, auth } from "../firebase";
 import { collection, getDocs, addDoc, serverTimestamp, query, where, doc, deleteDoc, updateDoc, writeBatch } from "firebase/firestore";
@@ -95,6 +96,9 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
   const [useApiForWhatsapp, setUseApiForWhatsapp] = useState(false);
 
   const [editingEmployee, setEditingEmployee] = useState<Partial<Employee> | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isAssigningGoal, setIsAssigningGoal] = useState(false);
+  const [isHrApplying, setIsHrApplying] = useState(false);
 
   const [hrForm, setHrForm] = useState({
     role: "",
@@ -153,6 +157,7 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
       return;
     }
     const path = "employees";
+    setIsSaving(true);
     try {
       if (editingEmployee.id) {
          await updateDoc(doc(db, path, editingEmployee.id), editingEmployee as any);
@@ -173,6 +178,8 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
       console.error("Error saving employee:", error);
       toast.error("Failed to save employee");
       handleFirestoreError(error, OperationType.WRITE, path);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -192,6 +199,7 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
   const handleHrBulkUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedEmployees.length === 0) return;
+    setIsHrApplying(true);
     try {
       const batch = writeBatch(db);
       const updates: any = {};
@@ -212,6 +220,8 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
     } catch (error) {
       console.error("Bulk update failed:", error);
       toast.error("Failed to update employees");
+    } finally {
+      setIsHrApplying(false);
     }
   };
 
@@ -265,6 +275,7 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
     e.preventDefault();
     if (!auth.currentUser || !selectedEmployee) return;
     const path = "goals";
+    setIsAssigningGoal(true);
     try {
       await addDoc(collection(db, path), {
         employeeId: selectedEmployee.id,
@@ -283,6 +294,8 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
       console.error("Error assigning goal:", error);
       toast.error("Failed to assign goal");
       handleFirestoreError(error, OperationType.WRITE, path);
+    } finally {
+      setIsAssigningGoal(false);
     }
   };
 
@@ -372,7 +385,7 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
           </div>
           <h3 className="text-lg font-bold mb-2">No Staff Members Yet</h3>
           <p className="text-sm neu-text-muted max-w-md mb-6">
-            Get started by adding employees. In Phase 2, they will get their own dashboards, targets, and rewards.
+            Get started by adding employees so they can access their portal, targets, and rewards.
           </p>
           <button 
             onClick={() => setIsAddModalOpen(true)}
@@ -560,9 +573,11 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-3 bg-[var(--accent)] text-white rounded-xl font-bold text-sm shadow-lg hover:opacity-90"
+                  disabled={isAssigningGoal}
+                  className="flex-1 py-3 bg-[var(--accent)] text-white rounded-xl font-bold text-sm shadow-lg hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-70"
                 >
-                  Confirm Assignment
+                  {isAssigningGoal ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {isAssigningGoal ? "Assigning..." : "Confirm Assignment"}
                 </button>
               </div>
             </form>
@@ -654,9 +669,11 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-3 bg-[var(--accent)] text-white rounded-xl font-bold text-sm shadow-lg hover:opacity-90"
+                  disabled={isSaving}
+                  className="flex-1 py-3 bg-[var(--accent)] text-white rounded-xl font-bold text-sm shadow-lg hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-70"
                 >
-                  Save Employee
+                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {isSaving ? "Saving..." : "Save Employee"}
                 </button>
               </div>
             </form>
@@ -738,10 +755,11 @@ export function EmployeesView({ onSimulate }: { onSimulate?: (emp: Employee) => 
                 </button>
                 <button 
                   type="submit"
-                  disabled={selectedEmployees.length === 0}
-                  className="flex-1 py-3 bg-[var(--accent)] text-white rounded-xl font-bold text-sm shadow-lg hover:opacity-90 disabled:opacity-50"
+                  disabled={selectedEmployees.length === 0 || isHrApplying}
+                  className="flex-1 py-3 bg-[var(--accent)] text-white rounded-xl font-bold text-sm shadow-lg hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Apply Updates
+                  {isHrApplying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {isHrApplying ? "Applying..." : "Apply Updates"}
                 </button>
               </div>
             </form>

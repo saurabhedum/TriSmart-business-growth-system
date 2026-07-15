@@ -280,9 +280,26 @@ export function InvoicesView() {
               </tr>
             </thead>
             <tbody>
-              {filteredInvoices.map((inv) => (
-                <motion.tr 
-                  key={inv.id}
+              {filteredInvoices.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-24 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                        <FileText className="w-8 h-8 text-[var(--text-muted)]" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-[var(--text-main)]">No invoices found</h4>
+                        <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                          Create a new invoice to get started. 
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredInvoices.map((inv) => (
+                  <motion.tr 
+                    key={inv.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   onClick={() => openEdit(inv as Invoice, { stopPropagation: () => {} } as any)}
@@ -323,7 +340,8 @@ export function InvoicesView() {
                     </button>
                   </td>
                 </motion.tr>
-              ))}
+              )))
+            }
             </tbody>
           </table>
         </div>

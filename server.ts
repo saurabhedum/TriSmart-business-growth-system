@@ -988,6 +988,60 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
+  // New Architecture Step 1: API Gateway Middleware Layer
+  const rateLimit = await import('express-rate-limit');
+  
+  // 1. Rate Limiting
+  const apiLimiter = rateLimit.default({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+  });
+
+  // Apply rate limiter to all API requests
+  app.use('/api', apiLimiter);
+
+  // 2. CORS Whitelist
+  const whitelist = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    process.env.VITE_APP_URL || '*' // Fallback for dev/prod
+  ];
+  
+  const corsOptions = {
+    origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+      if (!origin || whitelist.indexOf(origin) !== -1 || whitelist.includes('*')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  };
+  
+  // 3. Token Auth Middleware (To be applied to specific routes)
+  const requireAdminAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      if (admin.apps.length) {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        (req as any).user = decodedToken;
+        next();
+      } else {
+        // Fallback or skip in client-only mode
+        next();
+      }
+    } catch (error) {
+      return res.status(403).json({ error: 'Forbidden: Invalid token' });
+    }
+  };
+
   // Security and performance middleware
   app.use(
     helmet({
@@ -999,7 +1053,7 @@ async function startServer() {
     }),
   );
   app.use(compression());
-  app.use(cors());
+  app.use(cors(corsOptions));
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
@@ -1106,54 +1160,21 @@ async function startServer() {
     }
   });
 
-  // Copilot Analytics API using Gemini API
-  app.post("/api/copilot/analyze", async (req, res) => {
-    try {
-      const { leadData } = req.body;
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(503).json({ error: "Gemini API key is not configured on the server." });
-      }
+  // AI Routes
+  const { aiRouter } = await import('./server/routes/ai.ts');
+  app.use('/api', aiRouter);
 
-      const ai = new GoogleGenAI({ 
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build'
-    }
-  }
-});
-      const prompt = `
-        You are a top-tier retail sales copilot and AI consultant.
-        Analyze this customer profile:
-        ${JSON.stringify(leadData, null, 2)}
-        
-        Provide real-time actionable recommendations in JSON format:
-        {
-          "recommendedUpsell": "string (Short specific action to upsell)",
-          "crossSellBundle": "string (A logical bundle of products)",
-          "objectionHandling": "string (How to overcome likely objections based on their data)",
-          "draftMessage": "string (A polite, conversion-optimized message to send them right now)"
-        }
-        Make it very brief, hyper-specific to their data, and highly persuasive.
-        Output ONLY raw JSON, no markdown.
-      `;
+  // Webhooks Routes
+  const { webhooksRouter } = await import('./server/routes/webhooks.ts');
+  app.use('/api', webhooksRouter);
 
-      const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
-        contents: prompt
-      });
+  // Automation Routes
+  const { automationRouter } = await import('./server/routes/automation.ts');
+  app.use('/api', automationRouter);
 
-      let responseText = response.text || "{}";
-      responseText = responseText.replace(/\`\`\`json/g, "").replace(/\`\`\`/g, "").trim();
-      
-      const analysis = JSON.parse(responseText);
-      res.json(analysis);
-
-    } catch (err) {
-      console.error("Copilot Analysis Error:", err);
-      res.status(500).json({ error: "Failed to run Copilot analysis" });
-    }
-  });
+  // Background Workers (BullMQ)
+  const { setupWorkers } = await import('./server/queue/bullmq.ts');
+  setupWorkers();
 
   // WhatsApp Order Link Endpoint
   app.get("/api/wa-order-link/:ownerId/:itemId", async (req, res) => {
@@ -2571,6 +2592,143 @@ async function startServer() {
     }
   });
 
+class BackgroundBroadcastProcessor {
+    private static QUEUE_CONCURRENCY = 10;
+    private static BATCH_DELAY_MS = 500;
+    private static MAX_RETRIES = 3;
+
+    static async process(
+      ownerId: string, 
+      customers: any[], 
+      settings: any, 
+      message: string, 
+      mediaBase64?: string, 
+      mediaName?: string
+    ) {
+      const db = admin.apps.length ? getAdminDb() : null;
+      let successCount = 0;
+      let failCount = 0;
+      const errors: string[] = [];
+
+      for (let i = 0; i < customers.length; i += this.QUEUE_CONCURRENCY) {
+        const batch = customers.slice(i, i + this.QUEUE_CONCURRENCY);
+        
+        await Promise.all(batch.map(async (customer) => {
+          let attempt = 0;
+          let success = false;
+          let lastError = "";
+
+          while (attempt < this.MAX_RETRIES && !success) {
+            try {
+              let finalTemplateParams: any[] = [message];
+              const templateName = settings.metaTemplateBroadcast || "mass_broadcast_generic";
+              
+              if (settings.metaCustomTemplates) {
+                const matchedConfig = settings.metaCustomTemplates.find((t:any) => t.templateName === templateName);
+                if (matchedConfig && matchedConfig.parameters) {
+                  const paramKeys = matchedConfig.parameters.split(',').map((s:string) => s.trim());
+                  finalTemplateParams = paramKeys.map((key:string) => {
+                    if (key === 'customer_name') return customer.name || "Customer";
+                    if (key === 'customer_balance') return customer.balance || 0;
+                    if (key === 'billing_amount') return settings.billingAmount || 0;
+                    if (key === 'new_balance') return customer.balance || 0;
+                    if (key === 'payment_amount') return customer.balance || 0;
+                    if (key === 'overdue_amount') return customer.balance || 0;
+                    if (key === 'date') return new Date().toLocaleDateString('en-GB');
+                    if (key === 'portal_link') return `${settings.publicPortalBaseUrl || 'https://ais-dev-bgo3e3yfqihdrbor7bolgx-496681651924.asia-southeast1.run.app'}/?portal=true&customerId=${customer.id}`;
+                    if (key === 'button_param') return { isButtonParam: true, value: `?portal=true&customerId=${customer.id}`, index: "0" };
+                    if (key === 'message') return message;
+                    return message;
+                  });
+                }
+              }
+
+              if (settings.preferredNotificationMethod === 'instagram') {
+                  const recipientId = customer.instagramId || customer.mobileNumber; 
+                  if (!recipientId) throw new Error("No Instagram Recipient ID");
+                  if (!settings?.instaApiToken) throw new Error("Missing Instagram token.");
+
+                  const payload = {
+                    recipient: { id: recipientId },
+                    message: { text: message }
+                  };
+                  const res = await fetch(`https://graph.facebook.com/v18.0/me/messages?access_token=${settings.instaApiToken}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                  });
+                  if (!res.ok) {
+                     const data = await res.json().catch(()=>({}));
+                     throw new Error(data.error?.message || "Instagram API Error");
+                  }
+              } else {
+                  await sendWhatsAppMessage(
+                    settings,
+                    customer.mobileNumber,
+                    message,
+                    mediaBase64,
+                    mediaName,
+                    false,
+                    "broadcast",
+                    finalTemplateParams,
+                  );
+              }
+
+              success = true;
+              successCount++;
+              
+              if (db) {
+                await db.collection("automation_audit").add({
+                  ownerId,
+                  type: "BROADCAST_SUCCESS",
+                  status: "success",
+                  description: `Broadcast sent to ${customer.name || customer.mobileNumber}`,
+                  timestamp: admin.firestore.FieldValue.serverTimestamp()
+                });
+              }
+
+            } catch (err: any) {
+              attempt++;
+              lastError = err.message;
+              if (attempt >= this.MAX_RETRIES) {
+                failCount++;
+                errors.push(`${customer.name || customer.mobileNumber}: ${lastError}`);
+                if (db) {
+                  await db.collection("automation_audit").add({
+                    ownerId,
+                    type: "BROADCAST_FAIL",
+                    status: "failed",
+                    description: `Broadcast failed for ${customer.name || customer.mobileNumber}: ${lastError}`,
+                    error: lastError,
+                    timestamp: admin.firestore.FieldValue.serverTimestamp()
+                  });
+                }
+              } else {
+                // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 500));
+              }
+            }
+          }
+        }));
+
+        // Delay between constraint blocks
+        await new Promise(resolve => setTimeout(resolve, this.BATCH_DELAY_MS));
+      }
+
+      if (db) {
+        await db.collection("automation_audit").add({
+           ownerId,
+           type: "BROADCAST_COMPLETED",
+           status: failCount === 0 ? "success" : (successCount > 0 ? "warning" : "failed"),
+           description: `Broadcast Campaign finished. Success: ${successCount}, Failed: ${failCount}`,
+           timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      console.log(`[Broadcast Queue] Finished: ${successCount} sent, ${failCount} failed.`);
+    }
+  }
+
   // Bulk Broadcast API
   app.post("/api/wa/broadcast", async (req, res) => {
     try {
@@ -2669,59 +2827,16 @@ async function startServer() {
       });
 
       console.log(`Broadcasting to ${customers.length} customers...`);
+      
+      // Dispatch background processor
+      BackgroundBroadcastProcessor.process(ownerId, customers, settings, message, mediaBase64, mediaName).catch(e => {
+         console.error("Critical error in Background Broadcast Processor", e);
+      });
 
-      const results = { success: 0, failed: 0, errors: [] as string[] };
-
-      for (const customer of customers) {
-        try {
-          let finalTemplateParams: any[] = [message]; // Default parameter is just the message
-          
-          const templateName = settings.metaTemplateBroadcast || "mass_broadcast_generic";
-          if (settings.metaCustomTemplates) {
-            const matchedConfig = settings.metaCustomTemplates.find((t:any) => t.templateName === templateName);
-            if (matchedConfig && matchedConfig.parameters) {
-              const paramKeys = matchedConfig.parameters.split(',').map((s:string) => s.trim());
-              finalTemplateParams = paramKeys.map((key:string) => {
-                if (key === 'customer_name') return customer.name || "Customer";
-                if (key === 'customer_balance') return customer.balance || 0;
-                if (key === 'billing_amount') return settings.billingAmount || 0;
-                if (key === 'new_balance') return customer.balance || 0;
-                if (key === 'payment_amount') return customer.balance || 0;
-                if (key === 'overdue_amount') return customer.balance || 0;
-                if (key === 'date') return new Date().toLocaleDateString('en-GB');
-                if (key === 'portal_link') return `${settings.publicPortalBaseUrl || 'https://ais-dev-bgo3e3yfqihdrbor7bolgx-496681651924.asia-southeast1.run.app'}/?portal=true&customerId=${customer.id}`;
-                if (key === 'button_param') return { isButtonParam: true, value: `?portal=true&customerId=${customer.id}`, index: "0" };
-                if (key === 'message') return message;
-                return message; // Default mapping
-              });
-            }
-          }
-
-          await sendWhatsAppMessage(
-            settings,
-            customer.mobileNumber,
-            message,
-            mediaBase64,
-            mediaName,
-            false,
-            "broadcast",
-            finalTemplateParams,
-          );
-          results.success++;
-        } catch (e: any) {
-          results.failed++;
-          results.errors.push(`${customer.name}: ${e.message}`);
-        }
-      }
-
-      if (results.failed > 0) {
-        console.warn(`[Broadcast] Completed with failures:`, results.errors);
-      }
-
-      res.json({ status: "completed", ...results });
+      res.status(202).json({ status: "queued", count: customers.length, message: "Broadcast deployed to background worker." });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: "Broadcast failed" });
+      res.status(500).json({ error: "Broadcast dispatch failed" });
     }
   });
 

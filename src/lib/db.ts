@@ -146,6 +146,7 @@ export interface MarketingCampaign {
   budget?: number; // Financial cost of the campaign
   targetSegment?: string; // Target Segment (e.g. All, Hot, Warm, Cold)
   type?: 'Broadcast' | 'Sequence';
+  whatsappTemplateName?: string;
   sequenceSteps?: { delayDays: number; messageTemplate: string }[];
 }
 
@@ -945,6 +946,9 @@ export const subscribeToSettings = (callback: (settings: AppSettings | any) => v
     } else {
       callback({ businessName: "New Business" });
     }
+  }, (error) => {
+    console.error("Error subscribing to settings:", error);
+    callback({ businessName: "Retail OS User" }); // Fallback on error
   });
 };
 

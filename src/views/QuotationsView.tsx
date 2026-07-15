@@ -278,11 +278,28 @@ export function QuotationsView() {
               </tr>
             </thead>
             <tbody>
-              {filteredQuotations.map((quo) => (
-                <motion.tr 
-                  key={quo.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+              {filteredQuotations.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-24 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                        <FileText className="w-8 h-8 text-[var(--text-muted)]" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-[var(--text-main)]">No quotations found</h4>
+                        <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm mx-auto">
+                          Create a new quotation to get started. 
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredQuotations.map((quo) => (
+                  <motion.tr 
+                    key={quo.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                   onClick={() => openEdit(quo as Quotation, { stopPropagation: () => {} } as any)}
                   className={`border-b border-black/5 dark:border-white/5 hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors group cursor-pointer ${selectedIds.has(quo.id) ? 'bg-[var(--accent)]/5' : ''}`}
                 >
@@ -321,7 +338,8 @@ export function QuotationsView() {
                     </button>
                   </td>
                 </motion.tr>
-              ))}
+              )))
+            }
             </tbody>
           </table>
         </div>
